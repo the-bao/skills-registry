@@ -37,3 +37,31 @@ export interface AddTagRequest {
 export interface ImportRequest {
   names: string[];
 }
+
+export interface Combination {
+  name: string;
+  description: string;
+  skills: string[];
+}
+
+export interface CombinationListResponse {
+  combinations: Combination[];
+  total: number;
+}
+
+export interface CreateCombinationRequest {
+  name: string;
+  description: string;
+  skills: string[];
+}
+
+export interface UpdateCombinationRequest {
+  name?: string;
+  description?: string;
+  skills?: string[];
+}
+
+export interface InstallCombinationResponse {
+  installed: string[];
+  failed: string[];
+}

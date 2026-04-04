@@ -5,11 +5,13 @@ use std::path::Path;
 use redb::{Database, ReadableTable, TableDefinition};
 
 use crate::error::AppError;
+use crate::models::Combination;
 use crate::models::Skill;
 use crate::parser::parse_skill_frontmatter;
 
 const SKILLS_TABLE: TableDefinition<&str, &str> = TableDefinition::new("skills");
 const TAGS_TABLE: TableDefinition<&str, &str> = TableDefinition::new("tags");
+const COMBINATIONS_TABLE: TableDefinition<&str, &str> = TableDefinition::new("combinations");
 
 #[derive(Debug)]
 pub struct Store {
@@ -26,6 +28,7 @@ impl Store {
         let write_txn = db.begin_write()?;
         write_txn.open_table(SKILLS_TABLE)?;
         write_txn.open_table(TAGS_TABLE)?;
+        write_txn.open_table(COMBINATIONS_TABLE)?;
         write_txn.commit()?;
 
         Ok(Store { db })
@@ -135,6 +138,11 @@ impl Store {
     }
 
     pub fn delete_skill(&self, name: &str) -> Result<(), AppError> {
+        // Remove from all combinations
+        if let Err(e) = self.cleanup_combination_refs(name) {
+            tracing::warn!("Failed to cleanup combination refs for '{}': {}", name, e);
+        }
+
         // Remove from all tags first
         if let Ok(tags) = self.get_all_tags() {
             for tag in tags {
@@ -294,6 +302,72 @@ impl Store {
             }
         }
         txn.commit()?;
+        Ok(())
+    }
+
+    // --- Combination methods ---
+
+    pub fn list_combinations(&self) -> Result<Vec<Combination>, AppError> {
+        let txn = self.db.begin_read()?;
+        let table = txn.open_table(COMBINATIONS_TABLE)?;
+
+        let mut combos = Vec::new();
+        for result in table.iter()? {
+            let (_, value) = result?;
+            let combo: Combination = serde_json::from_str(value.value())
+                .map_err(|e| AppError::Internal(format!("Deserialize combination error: {}", e)))?;
+            combos.push(combo);
+        }
+
+        combos.sort_by(|a, b| a.name.cmp(&b.name));
+        Ok(combos)
+    }
+
+    pub fn get_combination(&self, name: &str) -> Result<Option<Combination>, AppError> {
+        let txn = self.db.begin_read()?;
+        let table = txn.open_table(COMBINATIONS_TABLE)?;
+
+        match table.get(name)? {
+            Some(value) => {
+                let combo: Combination = serde_json::from_str(value.value())
+                    .map_err(|e| AppError::Internal(format!("Deserialize combination error: {}", e)))?;
+                Ok(Some(combo))
+            }
+            None => Ok(None),
+        }
+    }
+
+    pub fn put_combination(&self, combo: &Combination) -> Result<(), AppError> {
+        let txn = self.db.begin_write()?;
+        {
+            let mut table = txn.open_table(COMBINATIONS_TABLE)?;
+            let json = serde_json::to_string(combo)
+                .map_err(|e| AppError::Internal(format!("Serialize combination error: {}", e)))?;
+            table.insert(combo.name.as_str(), json.as_str())?;
+        }
+        txn.commit()?;
+        Ok(())
+    }
+
+    pub fn delete_combination(&self, name: &str) -> Result<(), AppError> {
+        let txn = self.db.begin_write()?;
+        {
+            let mut table = txn.open_table(COMBINATIONS_TABLE)?;
+            table.remove(name)?;
+        }
+        txn.commit()?;
+        Ok(())
+    }
+
+    pub fn cleanup_combination_refs(&self, skill_name: &str) -> Result<(), AppError> {
+        let combos = self.list_combinations()?;
+        for mut combo in combos {
+            let original_len = combo.skills.len();
+            combo.skills.retain(|s| s != skill_name);
+            if combo.skills.len() != original_len {
+                self.put_combination(&combo)?;
+            }
+        }
         Ok(())
     }
 }

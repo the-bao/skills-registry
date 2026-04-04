@@ -47,6 +47,10 @@ async fn main() {
         .route("/tags", get(handlers::tags::list_tags))
         .route("/skills/{name}/tags", post(handlers::tags::add_tag))
         .route("/skills/{name}/tags/{tag}", delete(handlers::tags::remove_tag))
+        // Combinations
+        .route("/combinations", get(handlers::combinations::list_combinations).post(handlers::combinations::create_combination))
+        .route("/combinations/{name}", get(handlers::combinations::get_combination).delete(handlers::combinations::delete_combination).put(handlers::combinations::update_combination))
+        .route("/combinations/{name}/install", post(handlers::combinations::install_combination))
         // Install/Import
         .route("/skills/{name}/install", post(handlers::install::install_skill))
         .route("/skills/import", post(handlers::install::import_skills))

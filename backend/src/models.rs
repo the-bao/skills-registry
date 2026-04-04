@@ -17,3 +17,10 @@ pub struct SkillFrontmatter {
     pub version: Option<String>,
     pub user_invocable: Option<bool>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Combination {
+    pub name: String,
+    pub description: String,
+    pub skills: Vec<String>,
+}

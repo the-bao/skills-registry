@@ -3,14 +3,15 @@ interface SidebarProps {
   selectedTag: string | null;
   onSelectTag: (tag: string | null) => void;
   skillCount: number;
+  comboCount?: number;
 }
 
-export function Sidebar({ tags, selectedTag, onSelectTag, skillCount }: SidebarProps) {
+export function Sidebar({ tags, selectedTag, onSelectTag, skillCount, comboCount }: SidebarProps) {
   return (
     <aside className="w-56 shrink-0 h-screen sticky top-0 border-r border-glass-border bg-glass backdrop-blur-2xl p-5 flex flex-col gap-5 overflow-y-auto">
       <div>
         <h1 className="text-lg font-semibold text-text-primary tracking-tight">Skills Registry</h1>
-        <p className="text-xs text-text-tertiary mt-0.5">{skillCount} skills</p>
+        <p className="text-xs text-text-tertiary mt-0.5">{skillCount} skills · {comboCount ?? 0} combinations</p>
       </div>
 
       <div>

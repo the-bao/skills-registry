@@ -7,6 +7,11 @@ import type {
   AddSkillRequest,
   AddTagRequest,
   ImportRequest,
+  Combination,
+  CombinationListResponse,
+  CreateCombinationRequest,
+  UpdateCombinationRequest,
+  InstallCombinationResponse,
 } from "./types";
 
 const BASE = "/api";
@@ -60,4 +65,27 @@ export const api = {
 
   importSkills: (body: ImportRequest) =>
     request<ImportResponse>("/skills/import", { method: "POST", body: JSON.stringify(body) }),
+
+  // Combinations
+  listCombinations: () => request<CombinationListResponse>("/combinations"),
+
+  getCombination: (name: string) =>
+    request<Combination>(`/combinations/${encodeURIComponent(name)}`),
+
+  createCombination: (body: CreateCombinationRequest) =>
+    request<Combination>("/combinations", { method: "POST", body: JSON.stringify(body) }),
+
+  updateCombination: (name: string, body: UpdateCombinationRequest) =>
+    request<Combination>(`/combinations/${encodeURIComponent(name)}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+
+  deleteCombination: (name: string) =>
+    request<{ deleted: string }>(`/combinations/${encodeURIComponent(name)}`, { method: "DELETE" }),
+
+  installCombination: (name: string) =>
+    request<InstallCombinationResponse>(`/combinations/${encodeURIComponent(name)}/install`, {
+      method: "POST",
+    }),
 };

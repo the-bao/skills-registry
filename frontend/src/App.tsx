@@ -9,6 +9,7 @@ import { SkillGrid } from "./components/SkillGrid";
 import { SkillDetail } from "./components/SkillDetail";
 import { AddSkillModal } from "./components/AddSkillModal";
 import { ImportModal } from "./components/ImportModal";
+import { CombinationsPage } from "./components/CombinationsPage";
 
 function App() {
   const queryClient = useQueryClient();
@@ -17,6 +18,7 @@ function App() {
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<"skills" | "combinations">("skills");
 
   const { data: skillsData } = useQuery({
     queryKey: ["skills", search, selectedTag],
@@ -32,6 +34,11 @@ function App() {
     queryKey: ["importable"],
     queryFn: api.listImportable,
     enabled: showImportModal,
+  });
+
+  const { data: combosData } = useQuery({
+    queryKey: ["combinations"],
+    queryFn: api.listCombinations,
   });
 
   const deleteMutation = useMutation({
@@ -103,32 +110,63 @@ function App() {
         selectedTag={selectedTag}
         onSelectTag={setSelectedTag}
         skillCount={skillsData?.total ?? 0}
+        comboCount={combosData?.total ?? 0}
       />
 
       <main className="flex-1 p-6">
-        <div className="max-w-5xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex-1">
-              <SearchBar value={search} onChange={setSearch} />
-            </div>
+        {/* Tab Switcher */}
+        <div className="max-w-5xl mx-auto mb-4">
+          <div className="inline-flex rounded-xl bg-white border border-glass-border p-1 gap-0.5">
             <button
-              onClick={() => setShowImportModal(true)}
-              className="shrink-0 text-sm px-4 py-2.5 rounded-xl border border-glass-border text-text-secondary hover:bg-black/[0.03] transition-colors cursor-pointer"
+              onClick={() => setActiveTab("skills")}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                activeTab === "skills"
+                  ? "bg-accent text-white"
+                  : "text-text-secondary hover:bg-black/[0.03]"
+              }`}
             >
-              Import
+              Skills
             </button>
             <button
-              onClick={() => setShowAddModal(true)}
-              className="shrink-0 text-sm px-4 py-2.5 rounded-xl bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer font-medium"
+              onClick={() => setActiveTab("combinations")}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                activeTab === "combinations"
+                  ? "bg-accent text-white"
+                  : "text-text-secondary hover:bg-black/[0.03]"
+              }`}
             >
-              + Add Skill
+              Combinations
             </button>
           </div>
-
-          {/* Grid */}
-          <SkillGrid skills={skills} onSelect={handleSelectSkill} />
         </div>
+
+        {activeTab === "skills" ? (
+          <div className="max-w-5xl mx-auto">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex-1">
+                <SearchBar value={search} onChange={setSearch} />
+              </div>
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="shrink-0 text-sm px-4 py-2.5 rounded-xl border border-glass-border text-text-secondary hover:bg-black/[0.03] transition-colors cursor-pointer"
+              >
+                Import
+              </button>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="shrink-0 text-sm px-4 py-2.5 rounded-xl bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer font-medium"
+              >
+                + Add Skill
+              </button>
+            </div>
+
+            {/* Grid */}
+            <SkillGrid skills={skills} onSelect={handleSelectSkill} />
+          </div>
+        ) : (
+          <CombinationsPage allSkills={skills} />
+        )}
       </main>
 
       {/* Modals */}
