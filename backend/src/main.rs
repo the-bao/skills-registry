@@ -1,0 +1,74 @@
+mod config;
+mod error;
+mod handlers;
+mod models;
+mod parser;
+mod store;
+
+use std::path::PathBuf;
+use std::sync::Arc;
+
+use axum::{Router, routing::{get, post, delete}, Json};
+use serde_json::{json, Value};
+use tower_http::cors::CorsLayer;
+use tower_http::services::ServeDir;
+
+use handlers::skills::AppState;
+
+async fn health() -> Json<Value> {
+    Json(json!({ "status": "ok" }))
+}
+
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::fmt::init();
+
+    let config = config::Config::from_env();
+    tracing::info!("Config: {:?}", config);
+
+    // Open database
+    let store = store::Store::open(&config.db_path).expect("Failed to open database");
+
+    // Sync from filesystem
+    store.sync_from_fs(&config.registry_path).expect("Failed to sync from filesystem");
+
+    let state = AppState {
+        store: Arc::new(store),
+        registry_path: config.registry_path.clone(),
+        skills_install_path: config.skills_install_path.clone(),
+    };
+
+    let api_routes = Router::new()
+        .route("/health", get(health))
+        // Skills CRUD
+        .route("/skills", get(handlers::skills::list_skills).post(handlers::skills::add_skill))
+        .route("/skills/{name}", get(handlers::skills::get_skill).delete(handlers::skills::delete_skill))
+        // Tags
+        .route("/tags", get(handlers::tags::list_tags))
+        .route("/skills/{name}/tags", post(handlers::tags::add_tag))
+        .route("/skills/{name}/tags/{tag}", delete(handlers::tags::remove_tag))
+        // Install/Import
+        .route("/skills/{name}/install", post(handlers::install::install_skill))
+        .route("/skills/import", post(handlers::install::import_skills))
+        .route("/skills/importable", get(handlers::install::list_importable))
+        .with_state(state);
+
+    let frontend_dist = std::env::var("FRONTEND_DIST")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| {
+            // Default: look for frontend/dist relative to project root
+            let base = std::env::current_dir().unwrap_or_default();
+            base.join("frontend").join("dist")
+        });
+
+    let app = Router::new()
+        .nest("/api", api_routes)
+        .fallback_service(ServeDir::new(frontend_dist))
+        .layer(CorsLayer::permissive());
+
+    let addr = format!("0.0.0.0:{}", config.port);
+    tracing::info!("Listening on {}", addr);
+
+    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+    axum::serve(listener, app).await.unwrap();
+}
