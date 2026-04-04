@@ -4,7 +4,15 @@ A local management system for Claude Code skills, with a macOS-style web interfa
 
 [中文文档](#中文)
 
-[![Star History Chart](https://api.star-history.com/svg?repos=the-bao/skills-registry&type=Date)](https://star-history.com/#the-bao/skills-registry&Date)
+## Star History
+
+<a href="https://www.star-history.com/?repos=the-bao%2Fskills-registry&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=the-bao/skills-registry&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=the-bao/skills-registry&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=the-bao/skills-registry&type=date&legend=top-left" />
+ </picture>
+</a>
 
 ---
 
