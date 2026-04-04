@@ -26,5 +26,6 @@ Thumbs.db
 # Vite
 frontend/public/
 
-# Nested git repos in registry
-registry/excalidraw-diagram/
+# Registry (created at startup)
+registry/*
+!registry/.gitkeep
