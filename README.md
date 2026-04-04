@@ -4,6 +4,8 @@ A local management system for Claude Code skills, with a macOS-style web interfa
 
 [中文文档](#中文)
 
+[![Star History Chart](https://api.star-history.com/svg?repos=the-bao/skills-registry&type=Date)](https://star-history.com/#the-bao/skills-registry&Date)
+
 ---
 
 ## Features
