@@ -82,6 +82,22 @@ function App() {
     },
   });
 
+  const autoTagMutation = useMutation({
+    mutationFn: api.autoTagSkill,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["skills"] });
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
+    },
+  });
+
+  const autoTagAllMutation = useMutation({
+    mutationFn: api.autoTagAll,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["skills"] });
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
+    },
+  });
+
   const addTagMutation = useMutation({
     mutationFn: ({ name, tag }: { name: string; tag: string }) =>
       api.addTag(name, { tag }),
@@ -170,6 +186,13 @@ function App() {
                 GitHub
               </button>
               <button
+                onClick={() => autoTagAllMutation.mutate()}
+                disabled={autoTagAllMutation.isPending}
+                className="shrink-0 text-sm px-4 py-2.5 rounded-xl border border-glass-border text-text-secondary hover:bg-black/[0.03] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {autoTagAllMutation.isPending ? "Tagging..." : "Auto Tag"}
+              </button>
+              <button
                 onClick={() => setShowAddModal(true)}
                 className="shrink-0 text-sm px-4 py-2.5 rounded-xl bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer font-medium"
               >
@@ -196,6 +219,7 @@ function App() {
             onInstall={(name) => installMutation.mutate(name)}
             onAddTag={(name, tag) => addTagMutation.mutate({ name, tag })}
             onRemoveTag={(name, tag) => removeTagMutation.mutate({ name, tag })}
+            onAutoTag={(name) => autoTagMutation.mutate(name)}
           />
         )}
       </AnimatePresence>

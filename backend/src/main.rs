@@ -1,3 +1,4 @@
+mod ai;
 mod config;
 mod error;
 mod handlers;
@@ -36,15 +37,21 @@ async fn main() {
         store: Arc::new(store),
         registry_path: config.registry_path.clone(),
         skills_install_path: config.skills_install_path.clone(),
+        http_client: reqwest::Client::new(),
+        anthropic_api_key: config.anthropic_api_key.clone(),
+        anthropic_base_url: config.anthropic_base_url.clone(),
+        anthropic_model: config.anthropic_model.clone(),
     };
 
     let api_routes = Router::new()
         .route("/health", get(health))
         // Skills CRUD
         .route("/skills", get(handlers::skills::list_skills).post(handlers::skills::add_skill))
+        .route("/skills/auto-tag", post(handlers::auto_tag::auto_tag_all))
         .route("/skills/{name}", get(handlers::skills::get_skill).delete(handlers::skills::delete_skill))
         // Tags
         .route("/tags", get(handlers::tags::list_tags))
+        .route("/skills/{name}/auto-tag", post(handlers::auto_tag::auto_tag_skill))
         .route("/skills/{name}/tags", post(handlers::tags::add_tag))
         .route("/skills/{name}/tags/{tag}", delete(handlers::tags::remove_tag))
         // Combinations

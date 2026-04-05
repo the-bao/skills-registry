@@ -6,6 +6,9 @@ pub struct Config {
     pub db_path: PathBuf,
     pub skills_install_path: PathBuf,
     pub port: u16,
+    pub anthropic_api_key: String,
+    pub anthropic_base_url: String,
+    pub anthropic_model: String,
 }
 
 impl Config {
@@ -45,11 +48,20 @@ impl Config {
             .and_then(|s| s.parse().ok())
             .unwrap_or(3000);
 
+        let anthropic_api_key = std::env::var("ANTHROPIC_AUTH_TOKEN").unwrap_or_default();
+        let anthropic_base_url = std::env::var("ANTHROPIC_BASE_URL")
+            .unwrap_or_else(|_| "https://api.anthropic.com".to_string());
+        let anthropic_model = std::env::var("ANTHROPIC_MODEL")
+            .unwrap_or_else(|_| "claude-sonnet-4-20250514".to_string());
+
         Self {
             registry_path,
             db_path,
             skills_install_path,
             port,
+            anthropic_api_key,
+            anthropic_base_url,
+            anthropic_model,
         }
     }
 }

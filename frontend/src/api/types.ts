@@ -75,3 +75,18 @@ export interface GithubImportResponse {
   failed: string[];
   skipped: string[];
 }
+
+export interface AutoTagResponse {
+  tags_added: string[];
+}
+
+export interface BatchAutoTagResponse {
+  results: SkillAutoTagResult[];
+  total_skills: number;
+  tagged_skills: number;
+}
+
+export interface SkillAutoTagResult {
+  name: string;
+  tags_added: string[];
+}

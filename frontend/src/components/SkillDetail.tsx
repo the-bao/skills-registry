@@ -9,6 +9,7 @@ interface SkillDetailProps {
   onInstall: (name: string) => void;
   onAddTag: (name: string, tag: string) => void;
   onRemoveTag: (name: string, tag: string) => void;
+  onAutoTag: (name: string) => void;
 }
 
 export function SkillDetail({
@@ -18,6 +19,7 @@ export function SkillDetail({
   onInstall,
   onAddTag,
   onRemoveTag,
+  onAutoTag,
 }: SkillDetailProps) {
   const [newTag, setNewTag] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -121,6 +123,12 @@ export function SkillDetail({
                 className="text-xs px-3 py-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer"
               >
                 Add
+              </button>
+              <button
+                onClick={() => onAutoTag(skill.name)}
+                className="text-xs px-3 py-1.5 rounded-lg border border-glass-border text-text-secondary hover:bg-accent/5 hover:border-accent/30 hover:text-accent transition-colors cursor-pointer"
+              >
+                AI Tag
               </button>
             </div>
           </div>

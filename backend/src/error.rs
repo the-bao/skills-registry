@@ -75,3 +75,9 @@ impl From<redb::DatabaseError> for AppError {
         AppError::Internal(err.to_string())
     }
 }
+
+impl From<reqwest::Error> for AppError {
+    fn from(err: reqwest::Error) -> Self {
+        AppError::Internal(format!("HTTP client error: {}", err))
+    }
+}

@@ -14,6 +14,8 @@ import type {
   InstallCombinationResponse,
   GithubImportRequest,
   GithubImportResponse,
+  AutoTagResponse,
+  BatchAutoTagResponse,
 } from "./types";
 
 const BASE = "/api";
@@ -96,4 +98,13 @@ export const api = {
     request<InstallCombinationResponse>(`/combinations/${encodeURIComponent(name)}/install`, {
       method: "POST",
     }),
+
+  // Auto-Tag
+  autoTagSkill: (name: string) =>
+    request<AutoTagResponse>(`/skills/${encodeURIComponent(name)}/auto-tag`, {
+      method: "POST",
+    }),
+
+  autoTagAll: () =>
+    request<BatchAutoTagResponse>("/skills/auto-tag", { method: "POST" }),
 };

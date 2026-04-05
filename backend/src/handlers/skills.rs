@@ -14,6 +14,10 @@ pub struct AppState {
     pub store: Arc<Store>,
     pub registry_path: PathBuf,
     pub skills_install_path: PathBuf,
+    pub http_client: reqwest::Client,
+    pub anthropic_api_key: String,
+    pub anthropic_base_url: String,
+    pub anthropic_model: String,
 }
 
 #[derive(Debug, Deserialize)]
