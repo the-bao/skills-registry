@@ -9,6 +9,7 @@ import { SkillGrid } from "./components/SkillGrid";
 import { SkillDetail } from "./components/SkillDetail";
 import { AddSkillModal } from "./components/AddSkillModal";
 import { ImportModal } from "./components/ImportModal";
+import { GithubImportModal } from "./components/GithubImportModal";
 import { CombinationsPage } from "./components/CombinationsPage";
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showGithubModal, setShowGithubModal] = useState(false);
   const [activeTab, setActiveTab] = useState<"skills" | "combinations">("skills");
 
   const { data: skillsData } = useQuery({
@@ -66,6 +68,14 @@ function App() {
 
   const importMutation = useMutation({
     mutationFn: api.importSkills,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["skills"] });
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
+    },
+  });
+
+  const githubImportMutation = useMutation({
+    mutationFn: api.importGithub,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["skills"] });
       queryClient.invalidateQueries({ queryKey: ["tags"] });
@@ -154,6 +164,12 @@ function App() {
                 Import
               </button>
               <button
+                onClick={() => setShowGithubModal(true)}
+                className="shrink-0 text-sm px-4 py-2.5 rounded-xl border border-glass-border text-text-secondary hover:bg-black/[0.03] transition-colors cursor-pointer"
+              >
+                GitHub
+              </button>
+              <button
                 onClick={() => setShowAddModal(true)}
                 className="shrink-0 text-sm px-4 py-2.5 rounded-xl bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer font-medium"
               >
@@ -196,6 +212,13 @@ function App() {
           skills={importable}
           onClose={() => setShowImportModal(false)}
           onImport={(names) => importMutation.mutate({ names })}
+        />
+      )}
+
+      {showGithubModal && (
+        <GithubImportModal
+          onClose={() => setShowGithubModal(false)}
+          onSubmit={(repo) => githubImportMutation.mutateAsync({ repo })}
         />
       )}
     </div>

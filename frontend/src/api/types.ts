@@ -65,3 +65,13 @@ export interface InstallCombinationResponse {
   installed: string[];
   failed: string[];
 }
+
+export interface GithubImportRequest {
+  repo: string;
+}
+
+export interface GithubImportResponse {
+  imported: string[];
+  failed: string[];
+  skipped: string[];
+}

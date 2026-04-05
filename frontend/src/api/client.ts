@@ -12,6 +12,8 @@ import type {
   CreateCombinationRequest,
   UpdateCombinationRequest,
   InstallCombinationResponse,
+  GithubImportRequest,
+  GithubImportResponse,
 } from "./types";
 
 const BASE = "/api";
@@ -65,6 +67,12 @@ export const api = {
 
   importSkills: (body: ImportRequest) =>
     request<ImportResponse>("/skills/import", { method: "POST", body: JSON.stringify(body) }),
+
+  importGithub: (body: GithubImportRequest) =>
+    request<GithubImportResponse>("/skills/import-github", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 
   // Combinations
   listCombinations: () => request<CombinationListResponse>("/combinations"),
