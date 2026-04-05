@@ -227,7 +227,7 @@ fn parse_repo(input: &str) -> Result<String, AppError> {
     )))
 }
 
-/// If root has SKILL.md, return [root]. Otherwise scan immediate subdirectories
+/// If root has SKILL.md, return [root]. Otherwise recursively scan subdirectories
 /// (skip hidden dirs like .git) for SKILL.md.
 fn scan_skill_dirs(base: &PathBuf) -> Result<Vec<PathBuf>, AppError> {
     let mut skill_dirs = Vec::new();
@@ -254,6 +254,10 @@ fn scan_skill_dirs(base: &PathBuf) -> Result<Vec<PathBuf>, AppError> {
 
         if path.join("SKILL.md").exists() {
             skill_dirs.push(path);
+        } else {
+            // Recurse into subdirectories that don't contain SKILL.md themselves
+            let nested = scan_skill_dirs(&path)?;
+            skill_dirs.extend(nested);
         }
     }
 
