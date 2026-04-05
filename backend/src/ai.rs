@@ -1,16 +1,6 @@
-use serde::Deserialize;
+use serde_json::Value;
 
 use crate::error::AppError;
-
-#[derive(Debug, Deserialize)]
-struct AnthropicResponse {
-    content: Vec<ContentBlock>,
-}
-
-#[derive(Debug, Deserialize)]
-struct ContentBlock {
-    text: String,
-}
 
 #[derive(Debug, serde::Serialize)]
 struct MessageRequest {
@@ -71,7 +61,7 @@ pub async fn suggest_tags(
 
     let body = MessageRequest {
         model: model.to_string(),
-        max_tokens: 256,
+        max_tokens: 1024,
         messages: vec![Message {
             role: "user".to_string(),
             content: prompt,
@@ -96,12 +86,18 @@ pub async fn suggest_tags(
         )));
     }
 
-    let api_resp: AnthropicResponse = resp.json().await?;
+    let api_resp: Value = resp.json().await?;
 
-    let text = api_resp
-        .content
-        .first()
-        .map(|b| b.text.as_str())
+    // Extract text from content blocks — prefer "text" type, fall back to "thinking" type
+    let text = api_resp["content"]
+        .as_array()
+        .and_then(|arr| {
+            arr.iter()
+                .find(|b| b["type"] == "text")
+                .or_else(|| arr.iter().find(|b| b["type"] == "thinking"))
+        })
+        .and_then(|b| b.get("text").or_else(|| b.get("thinking")))
+        .and_then(|v| v.as_str())
         .unwrap_or("");
 
     // Strip markdown code fences if present
