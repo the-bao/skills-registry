@@ -2,6 +2,8 @@ import type {
   Skill,
   SkillListResponse,
   TagsResponse,
+  TagDetailResponse,
+  RenameTagRequest,
   ImportableSkill,
   ImportResponse,
   AddSkillRequest,
@@ -14,7 +16,7 @@ import type {
   InstallCombinationResponse,
   GithubImportRequest,
   GithubImportResponse,
-  AutoTagResponse,
+  SuggestTagsResponse,
   BatchAutoTagResponse,
 } from "./types";
 
@@ -50,6 +52,18 @@ export const api = {
     request<{ deleted: string }>(`/skills/${encodeURIComponent(name)}`, { method: "DELETE" }),
 
   listTags: () => request<TagsResponse>("/tags"),
+
+  // Tag management
+  getTagsDetail: () => request<TagDetailResponse>("/tags/detail"),
+
+  renameTag: (name: string, body: RenameTagRequest) =>
+    request<{ renamed: string }>(`/tags/${encodeURIComponent(name)}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+
+  deleteTag: (name: string) =>
+    request<{ deleted: string }>(`/tags/${encodeURIComponent(name)}`, { method: "DELETE" }),
 
   addTag: (name: string, body: AddTagRequest) =>
     request<{ added: string }>(`/skills/${encodeURIComponent(name)}/tags`, {
@@ -99,9 +113,9 @@ export const api = {
       method: "POST",
     }),
 
-  // Auto-Tag
-  autoTagSkill: (name: string) =>
-    request<AutoTagResponse>(`/skills/${encodeURIComponent(name)}/auto-tag`, {
+  // Suggest Tags
+  suggestTags: (name: string) =>
+    request<SuggestTagsResponse>(`/skills/${encodeURIComponent(name)}/suggest-tags`, {
       method: "POST",
     }),
 

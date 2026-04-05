@@ -11,6 +11,8 @@ import { AddSkillModal } from "./components/AddSkillModal";
 import { ImportModal } from "./components/ImportModal";
 import { GithubImportModal } from "./components/GithubImportModal";
 import { CombinationsPage } from "./components/CombinationsPage";
+import { SuggestTagsModal } from "./components/SuggestTagsModal";
+import { TagManagementPage } from "./components/TagManagementPage";
 
 function App() {
   const queryClient = useQueryClient();
@@ -20,7 +22,14 @@ function App() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showGithubModal, setShowGithubModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<"skills" | "combinations">("skills");
+  const [activeTab, setActiveTab] = useState<"skills" | "combinations" | "tags">("skills");
+  const [suggestModal, setSuggestModal] = useState<{
+    open: boolean;
+    skillName: string;
+    suggested: string[];
+    existingTags: string[];
+    isAdding: boolean;
+  } | null>(null);
 
   const { data: skillsData } = useQuery({
     queryKey: ["skills", search, selectedTag],
@@ -82,12 +91,8 @@ function App() {
     },
   });
 
-  const autoTagMutation = useMutation({
-    mutationFn: api.autoTagSkill,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["skills"] });
-      queryClient.invalidateQueries({ queryKey: ["tags"] });
-    },
+  const suggestTagsMutation = useMutation({
+    mutationFn: api.suggestTags,
   });
 
   const autoTagAllMutation = useMutation({
@@ -115,6 +120,29 @@ function App() {
       queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
   });
+
+  const handleConfirmTags = async (tags: string[]) => {
+    if (!suggestModal) return;
+    setSuggestModal((prev) => (prev ? { ...prev, isAdding: true } : null));
+
+    for (const tag of tags) {
+      await addTagMutation.mutateAsync({ name: suggestModal.skillName, tag });
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["skills"] });
+    queryClient.invalidateQueries({ queryKey: ["tags"] });
+    setSuggestModal(null);
+  };
+
+  const handleTagsSuggested = (suggested: string[], skillName: string, existingTags: string[]) => {
+    setSuggestModal({
+      open: true,
+      skillName,
+      suggested,
+      existingTags,
+      isAdding: false,
+    });
+  };
 
   const handleSelectSkill = useCallback(async (skill: Skill) => {
     try {
@@ -163,6 +191,16 @@ function App() {
             >
               Combinations
             </button>
+            <button
+              onClick={() => setActiveTab("tags")}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                activeTab === "tags"
+                  ? "bg-accent text-white"
+                  : "text-text-secondary hover:bg-black/[0.03]"
+              }`}
+            >
+              Tags
+            </button>
           </div>
         </div>
 
@@ -203,8 +241,10 @@ function App() {
             {/* Grid */}
             <SkillGrid skills={skills} onSelect={handleSelectSkill} />
           </div>
-        ) : (
+        ) : activeTab === "combinations" ? (
           <CombinationsPage allSkills={skills} />
+        ) : (
+          <TagManagementPage />
         )}
       </main>
 
@@ -219,7 +259,10 @@ function App() {
             onInstall={(name) => installMutation.mutate(name)}
             onAddTag={(name, tag) => addTagMutation.mutate({ name, tag })}
             onRemoveTag={(name, tag) => removeTagMutation.mutate({ name, tag })}
-            onAutoTag={(name) => autoTagMutation.mutate(name)}
+            onSuggestTags={(name) => suggestTagsMutation.mutateAsync(name).then((res) => res.suggested)}
+            onTagsSuggested={(suggested) =>
+              handleTagsSuggested(suggested, selectedSkill.name, selectedSkill.tags)
+            }
           />
         )}
       </AnimatePresence>
@@ -243,6 +286,17 @@ function App() {
         <GithubImportModal
           onClose={() => setShowGithubModal(false)}
           onSubmit={(repo) => githubImportMutation.mutateAsync({ repo })}
+        />
+      )}
+
+      {suggestModal?.open && (
+        <SuggestTagsModal
+          skillName={suggestModal.skillName}
+          suggested={suggestModal.suggested}
+          existingTags={suggestModal.existingTags}
+          onConfirm={handleConfirmTags}
+          onClose={() => setSuggestModal(null)}
+          isLoading={suggestModal.isAdding}
         />
       )}
     </div>

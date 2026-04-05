@@ -16,6 +16,19 @@ export interface TagsResponse {
   tags: string[];
 }
 
+export interface TagDetail {
+  name: string;
+  skill_count: number;
+}
+
+export interface TagDetailResponse {
+  tags: TagDetail[];
+}
+
+export interface RenameTagRequest {
+  new_name: string;
+}
+
 export interface ImportableSkill {
   name: string;
   path: string;
@@ -76,8 +89,8 @@ export interface GithubImportResponse {
   skipped: string[];
 }
 
-export interface AutoTagResponse {
-  tags_added: string[];
+export interface SuggestTagsResponse {
+  suggested: string[];
 }
 
 export interface BatchAutoTagResponse {

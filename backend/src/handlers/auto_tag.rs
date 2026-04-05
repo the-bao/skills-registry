@@ -6,8 +6,8 @@ use crate::error::AppError;
 use crate::handlers::skills::AppState;
 
 #[derive(Debug, Serialize)]
-pub struct AutoTagResponse {
-    pub tags_added: Vec<String>,
+pub struct SuggestTagsResponse {
+    pub suggested: Vec<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -23,11 +23,11 @@ pub struct BatchAutoTagResponse {
     pub tagged_skills: usize,
 }
 
-/// Auto-tag a single skill using AI.
-pub async fn auto_tag_skill(
+/// Suggest tags for a single skill using AI (no DB writes).
+pub async fn suggest_tags(
     State(state): State<AppState>,
     Path(name): Path<String>,
-) -> Result<Json<AutoTagResponse>, AppError> {
+) -> Result<Json<SuggestTagsResponse>, AppError> {
     let skill = state
         .store
         .get_skill(&name)?
@@ -44,17 +44,7 @@ pub async fn auto_tag_skill(
     )
     .await?;
 
-    let mut tags_added = Vec::new();
-    for tag in &suggested {
-        if !skill.tags.contains(tag) {
-            match state.store.add_tag(&name, tag) {
-                Ok(_) => tags_added.push(tag.clone()),
-                Err(e) => tracing::warn!("Failed to add tag '{}' to '{}': {}", tag, name, e),
-            }
-        }
-    }
-
-    Ok(Json(AutoTagResponse { tags_added }))
+    Ok(Json(SuggestTagsResponse { suggested }))
 }
 
 /// Auto-tag all skills that have no tags using AI.

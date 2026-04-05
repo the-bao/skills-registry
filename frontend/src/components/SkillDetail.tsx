@@ -9,7 +9,8 @@ interface SkillDetailProps {
   onInstall: (name: string) => void;
   onAddTag: (name: string, tag: string) => void;
   onRemoveTag: (name: string, tag: string) => void;
-  onAutoTag: (name: string) => void;
+  onSuggestTags: (name: string) => Promise<string[]>;
+  onTagsSuggested: (suggested: string[]) => void;
 }
 
 export function SkillDetail({
@@ -19,10 +20,12 @@ export function SkillDetail({
   onInstall,
   onAddTag,
   onRemoveTag,
-  onAutoTag,
+  onSuggestTags,
+  onTagsSuggested,
 }: SkillDetailProps) {
   const [newTag, setNewTag] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isSuggesting, setIsSuggesting] = useState(false);
 
   const handleAddTag = () => {
     const t = newTag.trim();
@@ -125,10 +128,21 @@ export function SkillDetail({
                 Add
               </button>
               <button
-                onClick={() => onAutoTag(skill.name)}
-                className="text-xs px-3 py-1.5 rounded-lg border border-glass-border text-text-secondary hover:bg-accent/5 hover:border-accent/30 hover:text-accent transition-colors cursor-pointer"
+                onClick={async () => {
+                  setIsSuggesting(true);
+                  try {
+                    const suggested = await onSuggestTags(skill.name);
+                    onTagsSuggested(suggested);
+                  } catch (e) {
+                    console.error("Failed to suggest tags:", e);
+                  } finally {
+                    setIsSuggesting(false);
+                  }
+                }}
+                disabled={isSuggesting}
+                className="text-xs px-3 py-1.5 rounded-lg border border-glass-border text-text-secondary hover:bg-accent/5 hover:border-accent/30 hover:text-accent transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                AI Tag
+                {isSuggesting ? "Thinking..." : "AI Tag"}
               </button>
             </div>
           </div>

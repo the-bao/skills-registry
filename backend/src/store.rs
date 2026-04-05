@@ -305,6 +305,16 @@ impl Store {
         Ok(())
     }
 
+    pub fn get_skills_with_tag(&self, tag: &str) -> Result<Vec<String>, AppError> {
+        let txn = self.db.begin_read()?;
+        let table = txn.open_table(TAGS_TABLE)?;
+        let key = format!("__tag_skills__{}", tag);
+        match table.get(key.as_str())? {
+            Some(v) => Ok(serde_json::from_str(v.value()).unwrap_or_default()),
+            None => Ok(Vec::new()),
+        }
+    }
+
     pub fn rename_tag(&self, old_name: &str, new_name: &str) -> Result<(), AppError> {
         // Get all skills that have the old_name tag
         let skills_with_tag: Vec<String> = {

@@ -9,7 +9,7 @@ mod store;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use axum::{Router, routing::{get, post, delete}, Json};
+use axum::{Router, routing::{get, post, delete, put}, Json};
 use serde_json::{json, Value};
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
@@ -51,7 +51,9 @@ async fn main() {
         .route("/skills/{name}", get(handlers::skills::get_skill).delete(handlers::skills::delete_skill))
         // Tags
         .route("/tags", get(handlers::tags::list_tags))
-        .route("/skills/{name}/auto-tag", post(handlers::auto_tag::auto_tag_skill))
+        .route("/tags/detail", get(handlers::tags::list_tag_details))
+        .route("/tags/{tag}", put(handlers::tags::rename_tag).delete(handlers::tags::delete_tag))
+        .route("/skills/{name}/suggest-tags", post(handlers::auto_tag::suggest_tags))
         .route("/skills/{name}/tags", post(handlers::tags::add_tag))
         .route("/skills/{name}/tags/{tag}", delete(handlers::tags::remove_tag))
         // Combinations
