@@ -3,6 +3,7 @@ use axum::Json;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
+use std::process::Command;
 
 use crate::error::AppError;
 use crate::handlers::skills::AppState;
@@ -163,4 +164,223 @@ fn copy_dir_recursive(src: &PathBuf, dst: &PathBuf) -> Result<(), AppError> {
         }
     }
     Ok(())
+}
+
+// --- GitHub Import ---
+
+#[derive(Debug, Deserialize)]
+pub struct GithubImportRequest {
+    pub repo: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct GithubImportResponse {
+    pub imported: Vec<String>,
+    pub failed: Vec<String>,
+    pub skipped: Vec<String>,
+}
+
+/// Parse "owner/repo" or full GitHub URL into "owner/repo" format.
+fn parse_repo(input: &str) -> Result<String, AppError> {
+    let trimmed = input.trim();
+
+    // Already in "owner/repo" format
+    if let Some((owner, repo)) = trimmed.split_once('/') {
+        // Make sure there's no extra path segments or scheme
+        if !owner.is_empty()
+            && !owner.contains(':')
+            && !owner.contains('/')
+            && !repo.is_empty()
+            && !repo.contains('/')
+        {
+            let repo = repo.trim_end_matches(".git");
+            return Ok(format!("{}/{}", owner, repo));
+        }
+    }
+
+    // https://github.com/owner/repo or https://github.com/owner/repo.git
+    if let Some(rest) = trimmed
+        .strip_prefix("https://github.com/")
+        .or_else(|| trimmed.strip_prefix("http://github.com/"))
+    {
+        let rest = rest.trim_end_matches('/');
+        let rest = rest.trim_end_matches(".git");
+        let parts: Vec<&str> = rest.splitn(3, '/').collect();
+        if parts.len() >= 2 && !parts[0].is_empty() && !parts[1].is_empty() {
+            return Ok(format!("{}/{}", parts[0], parts[1]));
+        }
+    }
+
+    // git@github.com:owner/repo.git
+    if let Some(rest) = trimmed.strip_prefix("git@github.com:") {
+        let rest = rest.trim_end_matches('/');
+        let rest = rest.trim_end_matches(".git");
+        let parts: Vec<&str> = rest.splitn(3, '/').collect();
+        if parts.len() >= 2 && !parts[0].is_empty() && !parts[1].is_empty() {
+            return Ok(format!("{}/{}", parts[0], parts[1]));
+        }
+    }
+
+    Err(AppError::BadRequest(format!(
+        "Invalid repo format '{}'. Expected 'owner/repo', 'https://github.com/owner/repo', or 'git@github.com:owner/repo.git'",
+        trimmed
+    )))
+}
+
+/// If root has SKILL.md, return [root]. Otherwise scan immediate subdirectories
+/// (skip hidden dirs like .git) for SKILL.md.
+fn scan_skill_dirs(base: &PathBuf) -> Result<Vec<PathBuf>, AppError> {
+    let mut skill_dirs = Vec::new();
+
+    if base.join("SKILL.md").exists() {
+        skill_dirs.push(base.clone());
+        return Ok(skill_dirs);
+    }
+
+    for entry in fs::read_dir(base)? {
+        let entry = entry?;
+        let path = entry.path();
+
+        if !path.is_dir() {
+            continue;
+        }
+
+        // Skip hidden directories (e.g. .git)
+        let dir_name = entry.file_name();
+        let name_str = dir_name.to_string_lossy();
+        if name_str.starts_with('.') {
+            continue;
+        }
+
+        if path.join("SKILL.md").exists() {
+            skill_dirs.push(path);
+        }
+    }
+
+    Ok(skill_dirs)
+}
+
+/// Import skills from a GitHub repository.
+pub async fn import_from_github(
+    State(state): State<AppState>,
+    Json(body): Json<GithubImportRequest>,
+) -> Result<Json<GithubImportResponse>, AppError> {
+    let repo = parse_repo(&body.repo)?;
+    let repo_slug = repo.replace('/', "-");
+
+    let temp_dir = std::env::temp_dir().join(format!("skills-registry-github-{}", repo_slug));
+
+    // Clean up any previous clone at this path
+    if temp_dir.exists() {
+        fs::remove_dir_all(&temp_dir)?;
+    }
+
+    let clone_url = format!("https://github.com/{}.git", repo);
+
+    // Run git clone --depth 1
+    let output = Command::new("git")
+        .args(["clone", "--depth", "1", &clone_url, temp_dir.to_string_lossy().as_ref()])
+        .output()
+        .map_err(|e| AppError::Internal(format!("Failed to execute git: {}", e)))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        // Clean up failed clone directory if it was created
+        if temp_dir.exists() {
+            let _ = fs::remove_dir_all(&temp_dir);
+        }
+        return Err(AppError::Internal(format!(
+            "git clone failed: {}",
+            stderr.trim()
+        )));
+    }
+
+    let skill_dirs = scan_skill_dirs(&temp_dir)?;
+
+    let mut imported = Vec::new();
+    let mut failed = Vec::new();
+    let mut skipped = Vec::new();
+
+    for skill_dir in &skill_dirs {
+        let skill_file = skill_dir.join("SKILL.md");
+        let content = match fs::read_to_string(&skill_file) {
+            Ok(c) => c,
+            Err(e) => {
+                tracing::warn!("Failed to read SKILL.md in {:?}: {}", skill_dir, e);
+                let name = skill_dir
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string();
+                failed.push(name);
+                continue;
+            }
+        };
+
+        let frontmatter = match crate::parser::parse_skill_frontmatter(&content) {
+            Ok(f) => f,
+            Err(e) => {
+                tracing::warn!("Failed to parse frontmatter in {:?}: {}", skill_dir, e);
+                let name = skill_dir
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string();
+                failed.push(name);
+                continue;
+            }
+        };
+
+        let skill_name = frontmatter.name.clone();
+        let dest = state.registry_path.join(&skill_name);
+
+        // Skip if already exists in registry
+        if dest.exists()
+            || state
+                .store
+                .get_skill(&skill_name)
+                .unwrap_or_default()
+                .is_some()
+        {
+            skipped.push(skill_name);
+            continue;
+        }
+
+        match copy_dir_recursive(skill_dir, &dest) {
+            Ok(_) => {
+                let skill = Skill {
+                    name: frontmatter.name.clone(),
+                    description: frontmatter.description,
+                    version: frontmatter.version,
+                    user_invocable: frontmatter.user_invocable,
+                    tags: vec![],
+                    path: skill_name.clone(),
+                };
+                match state.store.put_skill(&skill) {
+                    Ok(_) => imported.push(skill_name),
+                    Err(e) => {
+                        tracing::warn!("Failed to index skill '{}': {}", skill_name, e);
+                        // Clean up copied directory
+                        let _ = fs::remove_dir_all(&dest);
+                        failed.push(skill_name);
+                    }
+                }
+            }
+            Err(e) => {
+                tracing::warn!("Failed to copy skill '{}': {}", skill_name, e);
+                failed.push(skill_name);
+            }
+        }
+    }
+
+    // Clean up temp dir
+    if temp_dir.exists() {
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    Ok(Json(GithubImportResponse {
+        imported,
+        failed,
+        skipped,
+    }))
 }

@@ -54,6 +54,7 @@ async fn main() {
         // Install/Import
         .route("/skills/{name}/install", post(handlers::install::install_skill))
         .route("/skills/import", post(handlers::install::import_skills))
+        .route("/skills/import-github", post(handlers::install::import_from_github))
         .route("/skills/importable", get(handlers::install::list_importable))
         .with_state(state);
 
