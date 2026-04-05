@@ -29,3 +29,6 @@ frontend/public/
 # Registry (created at startup)
 registry/*
 !registry/.gitkeep
+
+# Environment
+.env

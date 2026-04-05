@@ -22,6 +22,9 @@ async fn health() -> Json<Value> {
 
 #[tokio::main]
 async fn main() {
+    // Load .env file if present
+    let _ = dotenvy::dotenv();
+
     tracing_subscriber::fmt::init();
 
     let config = config::Config::from_env();
