@@ -23,7 +23,6 @@ export function CombinationDetail({
   const [editing, setEditing] = useState(false);
   const [editSkills, setEditSkills] = useState(combination.skills);
   const [editDescription, setEditDescription] = useState(combination.description);
-  const [addInput, setAddInput] = useState("");
 
   const handleDelete = () => {
     if (!confirmDelete) {
@@ -41,16 +40,12 @@ export function CombinationDetail({
     setEditing(false);
   };
 
-  const handleAddSkill = () => {
-    const skillName = addInput.trim();
-    if (skillName && !editSkills.includes(skillName)) {
-      setEditSkills([...editSkills, skillName]);
-      setAddInput("");
-    }
-  };
-
-  const handleRemoveSkill = (skillName: string) => {
-    setEditSkills(editSkills.filter((s) => s !== skillName));
+  const toggleSkill = (skillName: string) => {
+    setEditSkills((prev) =>
+      prev.includes(skillName)
+        ? prev.filter((s) => s !== skillName)
+        : [...prev, skillName]
+    );
   };
 
   const missingSkills = combination.skills.filter(
@@ -115,49 +110,39 @@ export function CombinationDetail({
               </div>
               <div>
                 <p className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-2">
-                  Skills
+                  Skills ({editSkills.length} selected)
                 </p>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {editSkills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="group inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-accent/10 text-accent"
-                    >
-                      {skill}
+                <div className="flex flex-col gap-1 max-h-48 overflow-y-auto">
+                  {allSkills.map((skill) => {
+                    const isSelected = editSkills.includes(skill.name);
+                    return (
                       <button
-                        onClick={() => handleRemoveSkill(skill)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:text-danger"
+                        key={skill.name}
+                        onClick={() => toggleSkill(skill.name)}
+                        className={`flex items-center gap-2 text-left px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${
+                          isSelected
+                            ? "bg-accent/10 text-accent"
+                            : "hover:bg-black/[0.03] text-text-secondary"
+                        }`}
                       >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <span
+                          className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                            isSelected ? "bg-accent border-accent" : "border-gray-300"
+                          }`}
+                        >
+                          {isSelected && (
+                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-xs truncate">{skill.name}</p>
+                          <p className="text-[11px] text-text-tertiary truncate">{skill.description}</p>
+                        </div>
                       </button>
-                    </span>
-                  ))}
-                </div>
-                <div className="flex gap-1.5">
-                  <input
-                    type="text"
-                    value={addInput}
-                    onChange={(e) => setAddInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleAddSkill()}
-                    placeholder="Add skill name..."
-                    className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-glass-border bg-white/50 outline-none focus:border-accent/40"
-                    list="skill-names"
-                  />
-                  <datalist id="skill-names">
-                    {allSkills
-                      .filter((s) => !editSkills.includes(s.name))
-                      .map((s) => (
-                        <option key={s.name} value={s.name} />
-                      ))}
-                  </datalist>
-                  <button
-                    onClick={handleAddSkill}
-                    className="text-xs px-3 py-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer"
-                  >
-                    Add
-                  </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
