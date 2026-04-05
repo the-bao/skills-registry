@@ -305,6 +305,98 @@ impl Store {
         Ok(())
     }
 
+    pub fn rename_tag(&self, old_name: &str, new_name: &str) -> Result<(), AppError> {
+        // Get all skills that have the old_name tag
+        let skills_with_tag: Vec<String> = {
+            let txn = self.db.begin_read()?;
+            let table = txn.open_table(TAGS_TABLE)?;
+            let key = format!("__tag_skills__{}", old_name);
+            match table.get(key.as_str())? {
+                Some(v) => serde_json::from_str(v.value()).unwrap_or_default(),
+                None => Vec::new(),
+            }
+        };
+
+        // Update each skill: replace old_name with new_name in tags array
+        for skill_name in &skills_with_tag {
+            let mut skill = match self.get_skill(skill_name)? {
+                Some(s) => s,
+                None => continue,
+            };
+            if let Some(pos) = skill.tags.iter().position(|t| t == old_name) {
+                skill.tags[pos] = new_name.to_string();
+                self.put_skill(&skill)?;
+            }
+        }
+
+        // Update TAGS_TABLE: delete old key, insert new key with same value
+        let txn = self.db.begin_write()?;
+        {
+            let mut table = txn.open_table(TAGS_TABLE)?;
+
+            // Get the value for the old tag (if any)
+            let tag_value: Option<String> = match table.get(old_name)? {
+                Some(v) => Some(v.value().to_string()),
+                None => None,
+            };
+
+            // Remove old tag entry
+            table.remove(old_name)?;
+
+            // Insert new tag entry with same value
+            if let Some(val) = tag_value {
+                table.insert(new_name, val.as_str())?;
+            }
+
+            // Update reverse index: delete old key, insert new key with same skill list
+            let reverse_key_old = format!("__tag_skills__{}", old_name);
+            let reverse_key_new = format!("__tag_skills__{}", new_name);
+
+            let skills_json: String = match table.get(reverse_key_old.as_str())? {
+                Some(v) => v.value().to_string(),
+                None => String::from("[]"),
+            };
+
+            table.remove(reverse_key_old.as_str())?;
+            table.insert(reverse_key_new.as_str(), skills_json.as_str())?;
+        }
+        txn.commit()?;
+        Ok(())
+    }
+
+    pub fn delete_tag(&self, tag_name: &str) -> Result<(), AppError> {
+        // Get all skills that have this tag
+        let skills_with_tag: Vec<String> = {
+            let txn = self.db.begin_read()?;
+            let table = txn.open_table(TAGS_TABLE)?;
+            let key = format!("__tag_skills__{}", tag_name);
+            match table.get(key.as_str())? {
+                Some(v) => serde_json::from_str(v.value()).unwrap_or_default(),
+                None => Vec::new(),
+            }
+        };
+
+        // Remove tag from each skill's tags array
+        for skill_name in &skills_with_tag {
+            let mut skill = match self.get_skill(skill_name)? {
+                Some(s) => s,
+                None => continue,
+            };
+            skill.tags.retain(|t| t != tag_name);
+            self.put_skill(&skill)?;
+        }
+
+        // Delete from TAGS_TABLE and reverse index
+        let txn = self.db.begin_write()?;
+        {
+            let mut table = txn.open_table(TAGS_TABLE)?;
+            table.remove(tag_name)?;
+            table.remove(format!("__tag_skills__{}", tag_name).as_str())?;
+        }
+        txn.commit()?;
+        Ok(())
+    }
+
     // --- Combination methods ---
 
     pub fn list_combinations(&self) -> Result<Vec<Combination>, AppError> {
