@@ -4,6 +4,7 @@ import type { Skill } from "../api/types";
 
 interface SkillDetailProps {
   skill: Skill;
+  allTags: string[];
   onClose: () => void;
   onDelete: (name: string) => void;
   onInstall: (name: string) => void;
@@ -15,6 +16,7 @@ interface SkillDetailProps {
 
 export function SkillDetail({
   skill,
+  allTags,
   onClose,
   onDelete,
   onInstall,
@@ -118,12 +120,21 @@ export function SkillDetail({
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
-                placeholder="Add tag..."
+                placeholder="Add or select tag..."
                 className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-glass-border bg-white/50 outline-none focus:border-accent/40 transition-colors"
+                list="existing-tags"
               />
+              <datalist id="existing-tags">
+                {allTags
+                  .filter((t) => !skill.tags.includes(t))
+                  .map((t) => (
+                    <option key={t} value={t} />
+                  ))}
+              </datalist>
               <button
                 onClick={handleAddTag}
-                className="text-xs px-3 py-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer"
+                disabled={!newTag.trim()}
+                className="text-xs px-3 py-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Add
               </button>

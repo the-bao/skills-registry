@@ -239,6 +239,7 @@ function App() {
           <SkillDetail
             key={selectedSkill.name}
             skill={selectedSkill}
+            allTags={tags}
             onClose={() => setSelectedSkill(null)}
             onDelete={(name) => deleteMutation.mutate(name)}
             onInstall={(name) => installMutation.mutate(name)}
