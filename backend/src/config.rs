@@ -9,9 +9,24 @@ pub struct Config {
 }
 
 impl Config {
+    /// Walk up from current dir to find the project root (directory containing Cargo.toml with our package name)
+    fn find_project_root() -> PathBuf {
+        let start = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+        let mut dir = start.clone();
+        loop {
+            // Look for the project root by finding a directory that has both registry/ and data/
+            if dir.join("registry").join(".gitkeep").exists() && dir.join("data").is_dir() {
+                return dir;
+            }
+            if !dir.pop() {
+                return start;
+            }
+        }
+    }
+
     pub fn from_env() -> Self {
         let home = dirs_sys::home_dir().unwrap_or_else(|| PathBuf::from("."));
-        let base = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+        let base = Self::find_project_root();
 
         let registry_path = std::env::var("REGISTRY_PATH")
             .map(PathBuf::from)
