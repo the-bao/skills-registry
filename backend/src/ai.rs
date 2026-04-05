@@ -48,14 +48,16 @@ pub async fn suggest_tags(
     };
 
     let prompt = format!(
-        r#"你是一个标签分类系统。根据技能的名称和描述，建议2-5个简洁的中文标签来分类这个技能。
+        r#"你是一个标签分类系统。根据技能的名称和描述，生成恰好3个简洁的中文标签。
 
 规则：
+- 必须返回恰好3个标签，不多不少
 - 每个标签2-6个字
-- 关注技能的用途、领域和技术特点
+- 3个标签必须从不同维度描述技能，避免语义重叠。例如一个描述用途，一个描述领域，一个描述技术特点
+- 只选最贴切的标签，宁缺毋滥
 - 只返回一个JSON数组，不要其他内容
 - 不要包含已有标签
-- 示例格式：["前端开发", "UI设计", "代码生成"]
+- 示例：["前端开发", "UI设计", "代码生成"] — 三个标签分别对应技术栈、设计领域、核心功能
 
 技能名称：{name}
 技能描述：{description}
@@ -111,10 +113,13 @@ pub async fn suggest_tags(
         .trim();
     let text = text.strip_suffix("```").unwrap_or(text).trim();
 
-    let tags: Vec<String> = serde_json::from_str(text).unwrap_or_else(|e| {
+    let mut tags: Vec<String> = serde_json::from_str(text).unwrap_or_else(|e| {
         tracing::warn!("Failed to parse AI tags from '{}': {}", text, e);
         Vec::new()
     });
+
+    // Hard cap at 3 tags
+    tags.truncate(3);
 
     Ok(tags)
 }
