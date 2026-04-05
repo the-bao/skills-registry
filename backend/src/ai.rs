@@ -24,6 +24,7 @@ pub async fn suggest_tags(
     skill_name: &str,
     skill_description: &str,
     existing_tags: &[String],
+    all_tags: &[String],
 ) -> Result<Vec<String>, AppError> {
     if api_key.is_empty() {
         return Err(AppError::BadRequest(
@@ -31,30 +32,41 @@ pub async fn suggest_tags(
         ));
     }
 
-    let existing = if existing_tags.is_empty() {
+    let skill_existing = if existing_tags.is_empty() {
         "无".to_string()
     } else {
         existing_tags.join(", ")
     };
 
-    let prompt = format!(
-        r#"你是一个标签分类系统。根据技能的名称和描述，生成恰好3个简洁的中文标签。
+    let all_existing_tags = if all_tags.is_empty() {
+        "（当前系统中暂无标签）".to_string()
+    } else {
+        format!("{}", all_tags.join(", "))
+    };
 
-规则：
+    let prompt = format!(
+        r#"你是一个标签分类系统。根据技能的名称和描述，从已有标签库中选择最贴切的标签。
+
+## 已有标签库（优先从中选择）
+{all_tags}
+
+## 当前技能已有标签
+{skill_existing}
+
+## 规则
 - 必须返回恰好3个标签，不多不少
-- 每个标签2-6个字
-- 3个标签必须从不同维度描述技能，避免语义重叠。例如一个描述用途，一个描述领域，一个描述技术特点
-- 只选最贴切的标签，宁缺毋滥
+- 优先从已有标签库中选择已有标签，保持标签一致性
+- 如果已有标签库中没有合适的，可以生成新的中文标签（2-6字）
+- 3个标签必须从不同维度描述技能，避免语义重叠
 - 只返回一个JSON数组，不要其他内容
-- 不要包含已有标签
-- 示例：["前端开发", "UI设计", "代码生成"] — 三个标签分别对应技术栈、设计领域、核心功能
+- 示例：["前端开发", "UI设计", "代码生成"]
 
 技能名称：{name}
-技能描述：{description}
-已有标签：{existing}"#,
+技能描述：{description}"#,
+        all_tags = all_existing_tags,
+        skill_existing = skill_existing,
         name = skill_name,
         description = skill_description,
-        existing = existing,
     );
 
     let url = format!("{}/v1/messages", base_url.trim_end_matches('/'));
@@ -68,14 +80,26 @@ pub async fn suggest_tags(
         }],
     };
 
-    let resp = client
-        .post(&url)
-        .header("x-api-key", api_key)
-        .header("anthropic-version", "2023-06-01")
-        .header("content-type", "application/json")
-        .json(&body)
-        .send()
-        .await?;
+    let resp = if base_url.contains("bigmodel") || base_url.contains("zhipu") {
+        // GLM uses Authorization Bearer header
+        client
+            .post(&url)
+            .header("Authorization", format!("Bearer {}", api_key))
+            .header("content-type", "application/json")
+            .json(&body)
+            .send()
+            .await?
+    } else {
+        // Anthropic/MiniMax use x-api-key header
+        client
+            .post(&url)
+            .header("x-api-key", api_key)
+            .header("anthropic-version", "2023-06-01")
+            .header("content-type", "application/json")
+            .json(&body)
+            .send()
+            .await?
+    };
 
     if !resp.status().is_success() {
         let status = resp.status();

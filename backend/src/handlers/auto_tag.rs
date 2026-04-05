@@ -33,6 +33,8 @@ pub async fn suggest_tags(
         .get_skill(&name)?
         .ok_or_else(|| AppError::NotFound(format!("Skill '{}' not found", name)))?;
 
+    let all_tags = state.store.get_all_tags()?;
+
     let suggested = crate::ai::suggest_tags(
         &state.http_client,
         &state.anthropic_base_url,
@@ -41,6 +43,7 @@ pub async fn suggest_tags(
         &skill.name,
         &skill.description,
         &skill.tags,
+        &all_tags,
     )
     .await?;
 
@@ -52,6 +55,7 @@ pub async fn auto_tag_all(
     State(state): State<AppState>,
 ) -> Result<Json<BatchAutoTagResponse>, AppError> {
     let skills = state.store.list_skills()?;
+    let all_tags = state.store.get_all_tags()?;
 
     // Filter to skills with no tags
     let untagged: Vec<_> = skills.into_iter().filter(|s| s.tags.is_empty()).collect();
@@ -69,6 +73,7 @@ pub async fn auto_tag_all(
             &skill.name,
             &skill.description,
             &skill.tags,
+            &all_tags,
         )
         .await
         {
