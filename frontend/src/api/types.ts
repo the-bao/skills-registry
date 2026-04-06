@@ -51,10 +51,20 @@ export interface ImportRequest {
   names: string[];
 }
 
+export interface ParallelGroup {
+  name?: string;
+  skills: string[];
+}
+
+export interface Workflow {
+  groups: ParallelGroup[];
+}
+
 export interface Combination {
   name: string;
   description: string;
   skills: string[];
+  workflow?: Workflow;
 }
 
 export interface CombinationListResponse {
@@ -66,12 +76,14 @@ export interface CreateCombinationRequest {
   name: string;
   description: string;
   skills: string[];
+  workflow?: Workflow;
 }
 
 export interface UpdateCombinationRequest {
   name?: string;
   description?: string;
   skills?: string[];
+  workflow?: Workflow;
 }
 
 export interface InstallCombinationResponse {

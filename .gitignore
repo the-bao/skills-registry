@@ -32,3 +32,6 @@ registry/*
 
 # Environment
 .env
+
+# Apple design folder (local reference)
+apple/

@@ -22,46 +22,77 @@ export function AddSkillModal({ onClose, onSubmit }: AddSkillModalProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(20px)" }}
         onClick={onClose}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+          initial={{ opacity: 0, scale: 0.96, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          transition={{ duration: 0.2 }}
-          className="w-full max-w-md bg-white/90 backdrop-blur-2xl rounded-2xl border border-glass-border p-6 mx-4"
-          style={{ boxShadow: "var(--shadow-modal)" }}
+          exit={{ opacity: 0, scale: 0.96, y: 12 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="w-full max-w-md rounded-2xl overflow-hidden"
+          style={{
+            background: "var(--color-white)",
+            boxShadow: "var(--shadow-modal)"
+          }}
           onClick={(e) => e.stopPropagation()}
         >
-          <h2 className="text-lg font-semibold text-text-primary mb-1">Add Skill</h2>
-          <p className="text-xs text-text-tertiary mb-4">
-            Enter the path to a directory containing a SKILL.md file
-          </p>
-
-          <input
-            type="text"
-            value={path}
-            onChange={(e) => setPath(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            placeholder="/path/to/skill-directory"
-            className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-glass-border bg-white/50 outline-none focus:border-accent/40 focus:ring-2 focus:ring-accent/10 transition-all mb-4"
-            autoFocus
-          />
-
-          <div className="flex gap-2 justify-end">
-            <button
-              onClick={onClose}
-              className="text-sm px-4 py-2 rounded-xl border border-glass-border text-text-secondary hover:bg-black/[0.03] transition-colors cursor-pointer"
+          {/* Header */}
+          <div
+            className="px-6 pt-6 pb-5"
+            style={{ background: "var(--color-light-gray)" }}
+          >
+            <h2
+              className="text-xl font-semibold text-[var(--color-text-primary)]"
+              style={{ letterSpacing: "-0.28px", lineHeight: 1.1 }}
             >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              className="text-sm px-4 py-2 rounded-xl bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer font-medium"
+              Add Skill
+            </h2>
+            <p
+              className="text-xs text-[var(--color-text-tertiary)] mt-2"
+              style={{ letterSpacing: "-0.12px" }}
             >
-              Add
-            </button>
+              Enter the path to a directory containing a SKILL.md file
+            </p>
+          </div>
+
+          {/* Content */}
+          <div className="p-6">
+            <input
+              type="text"
+              value={path}
+              onChange={(e) => setPath(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+              placeholder="/path/to/skill-directory"
+              className="w-full text-sm px-4 py-3 rounded-xl outline-none mb-5"
+              style={{
+                background: "rgba(0,0,0,0.04)",
+                border: "1px solid rgba(0,0,0,0.06)",
+                letterSpacing: "-0.374px"
+              }}
+              autoFocus
+            />
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={onClose}
+                className="text-sm px-5 py-2.5 rounded-full border transition-colors cursor-pointer"
+                style={{
+                  borderColor: "rgba(0,0,0,0.12)",
+                  color: "var(--color-text-secondary)",
+                  letterSpacing: "-0.224px"
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                className="btn-primary-blue"
+              >
+                Add
+              </button>
+            </div>
           </div>
         </motion.div>
       </motion.div>

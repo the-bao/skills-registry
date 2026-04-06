@@ -65,16 +65,24 @@ export function CombinationsPage({ allSkills }: CombinationsPageProps) {
   return (
     <div className="max-w-5xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-4 mb-8">
         <div className="flex-1">
-          <h2 className="text-lg font-semibold text-text-primary">Combinations</h2>
-          <p className="text-xs text-text-tertiary mt-0.5">
+          <h2
+            className="text-lg font-semibold text-[var(--color-text-primary)]"
+            style={{ letterSpacing: "-0.28px", lineHeight: 1.1 }}
+          >
+            Combinations
+          </h2>
+          <p
+            className="text-xs text-[var(--color-text-tertiary)] mt-1"
+            style={{ letterSpacing: "-0.12px" }}
+          >
             Group skills into installable suites
           </p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="shrink-0 text-sm px-4 py-2.5 rounded-xl bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer font-medium"
+          className="btn-primary-blue"
         >
           + New Combination
         </button>
@@ -82,7 +90,10 @@ export function CombinationsPage({ allSkills }: CombinationsPageProps) {
 
       {/* Grid */}
       {combinations.length === 0 ? (
-        <div className="flex items-center justify-center h-64 text-text-tertiary text-sm">
+        <div
+          className="flex items-center justify-center h-48 text-sm"
+          style={{ color: "var(--color-text-tertiary)" }}
+        >
           No combinations yet. Create one to group skills.
         </div>
       ) : (

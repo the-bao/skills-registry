@@ -46,93 +46,124 @@ export function SuggestTagsModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 backdrop-blur-sm"
+        className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+        style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(20px)" }}
         onClick={onClose}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+          initial={{ opacity: 0, scale: 0.96, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          transition={{ duration: 0.2 }}
-          className="w-full max-w-sm bg-white/90 backdrop-blur-2xl rounded-2xl border border-glass-border p-5 mx-4"
-          style={{ boxShadow: "var(--shadow-modal)" }}
+          exit={{ opacity: 0, scale: 0.96, y: 12 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="w-full max-w-sm rounded-2xl overflow-hidden"
+          style={{
+            background: "var(--color-white)",
+            boxShadow: "var(--shadow-modal)"
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-start justify-between mb-4">
+          <div
+            className="px-6 pt-6 pb-5 flex items-start justify-between"
+            style={{ background: "var(--color-light-gray)" }}
+          >
             <div>
-              <h3 className="text-base font-semibold text-text-primary">AI Tag Suggestions</h3>
-              <p className="text-xs text-text-tertiary mt-0.5">
-                for <span className="font-medium text-text-secondary">{skillName}</span>
+              <h3
+                className="text-lg font-semibold text-[var(--color-text-primary)]"
+                style={{ letterSpacing: "-0.28px", lineHeight: 1.1 }}
+              >
+                AI Tag Suggestions
+              </h3>
+              <p
+                className="text-xs text-[var(--color-text-tertiary)] mt-1"
+                style={{ letterSpacing: "-0.12px" }}
+              >
+                for <span className="font-medium text-[var(--color-text-secondary)]">{skillName}</span>
               </p>
             </div>
             <button
               onClick={onClose}
-              className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-black/5 transition-colors cursor-pointer text-text-tertiary"
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+              style={{ background: "rgba(0,0,0,0.04)" }}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg className="w-4 h-4 text-[var(--color-text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
-          {/* Tags */}
-          <div className="mb-5">
-            <p className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-2">
-              Suggested Tags
-            </p>
-            <div className="flex flex-wrap gap-1.5 min-h-[2rem]">
-              {suggested.map((tag) => {
-                const isExisting = existingTags.includes(tag);
-                const isSelected = selected.has(tag);
-
-                return (
-                  <button
-                    key={tag}
-                    onClick={() => toggleTag(tag)}
-                    disabled={isExisting}
-                    className={`
-                      inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg border transition-all
-                      ${isExisting
-                        ? "bg-gray-100 text-text-tertiary border-gray-200 cursor-not-allowed line-through"
-                        : isSelected
-                        ? "bg-accent/10 text-accent border-accent/30 cursor-pointer hover:bg-accent/15"
-                        : "bg-white/50 text-text-secondary border-glass-border cursor-pointer hover:border-accent/30 hover:text-accent"
-                      }
-                    `}
-                  >
-                    {tag}
-                    {isExisting && (
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-            {existingCount > 0 && (
-              <p className="text-[10px] text-text-tertiary mt-2">
-                {existingCount} tag{existingCount !== 1 ? "s" : ""} already present (not selectable)
+          {/* Content */}
+          <div className="p-6">
+            {/* Tags */}
+            <div className="mb-5">
+              <p
+                className="text-xs font-medium text-[var(--color-text-tertiary)] uppercase tracking-wider mb-3"
+                style={{ letterSpacing: "0.1em" }}
+              >
+                Suggested Tags
               </p>
-            )}
-          </div>
+              <div className="flex flex-wrap gap-2 min-h-[2rem]">
+                {suggested.map((tag) => {
+                  const isExisting = existingTags.includes(tag);
+                  const isSelected = selected.has(tag);
 
-          {/* Actions */}
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="flex-1 text-sm px-4 py-2 rounded-xl border border-glass-border text-text-secondary hover:bg-black/[0.03] transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleConfirm}
-              disabled={isLoading || selectableCount === 0}
-              className="flex-1 text-sm px-4 py-2 rounded-xl bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer font-medium disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {isLoading ? "Adding..." : `Add Selected (${selectableCount})`}
-            </button>
+                  return (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      disabled={isExisting}
+                      className={`
+                        inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-all
+                        ${isExisting
+                          ? "border-[rgba(0,0,0,0.08)] text-[var(--color-text-tertiary)] cursor-not-allowed line-through"
+                          : isSelected
+                          ? "tag-apple-blue border-transparent cursor-pointer"
+                          : "border-[rgba(0,0,0,0.08)] text-[var(--color-text-secondary)] cursor-pointer hover:border-[var(--color-apple-blue)] hover:text-[var(--color-apple-blue)]"
+                        }
+                      `}
+                      style={{ letterSpacing: "-0.224px" }}
+                    >
+                      {tag}
+                      {isExisting && (
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {existingCount > 0 && (
+                <p
+                  className="text-[11px] mt-3"
+                  style={{ color: "var(--color-text-tertiary)" }}
+                >
+                  {existingCount} tag{existingCount !== 1 ? "s" : ""} already present (not selectable)
+                </p>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="flex-1 text-sm px-5 py-2.5 rounded-full border transition-colors cursor-pointer"
+                style={{
+                  borderColor: "rgba(0,0,0,0.12)",
+                  color: "var(--color-text-secondary)",
+                  letterSpacing: "-0.224px"
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirm}
+                disabled={isLoading || selectableCount === 0}
+                className="flex-1 btn-primary-blue disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isLoading ? "Adding..." : `Add (${selectableCount})`}
+              </button>
+            </div>
           </div>
         </motion.div>
       </motion.div>

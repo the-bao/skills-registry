@@ -67,32 +67,79 @@ export function TagManagementPage() {
     <div className="max-w-3xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-text-primary">Tag Management</h2>
-        <p className="text-xs text-text-tertiary mt-0.5">
+        <h2
+          className="text-lg font-semibold text-[var(--color-text-primary)]"
+          style={{ letterSpacing: "-0.28px", lineHeight: 1.1 }}
+        >
+          Tag Management
+        </h2>
+        <p
+          className="text-xs text-[var(--color-text-tertiary)] mt-1"
+          style={{ letterSpacing: "-0.12px" }}
+        >
           Rename or delete tags across all skills
         </p>
       </div>
 
       {/* Table */}
-      <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-glass-border overflow-hidden">
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{ background: "var(--color-white)" }}
+      >
         {/* Table Header */}
-        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-3 border-b border-glass-border text-xs font-medium text-text-tertiary uppercase tracking-wider">
-          <div>Tag Name</div>
-          <div className="text-right pr-4">Skills</div>
-          <div className="w-20 text-center">Rename</div>
-          <div className="w-20 text-center">Delete</div>
+        <div
+          className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-3"
+          style={{
+            background: "var(--color-light-gray)",
+            borderBottom: "1px solid rgba(0,0,0,0.06)"
+          }}
+        >
+          <div
+            className="text-xs font-medium text-[var(--color-text-tertiary)] uppercase tracking-wider"
+            style={{ letterSpacing: "0.1em" }}
+          >
+            Tag Name
+          </div>
+          <div
+            className="text-right pr-4 text-xs font-medium text-[var(--color-text-tertiary)] uppercase tracking-wider"
+            style={{ letterSpacing: "0.1em" }}
+          >
+            Skills
+          </div>
+          <div className="w-20 text-center">
+            <span
+              className="text-xs font-medium text-[var(--color-text-tertiary)] uppercase tracking-wider"
+              style={{ letterSpacing: "0.1em" }}
+            >
+              Rename
+            </span>
+          </div>
+          <div className="w-20 text-center">
+            <span
+              className="text-xs font-medium text-[var(--color-text-tertiary)] uppercase tracking-wider"
+              style={{ letterSpacing: "0.1em" }}
+            >
+              Delete
+            </span>
+          </div>
         </div>
 
         {/* Loading State */}
         {isLoading && (
-          <div className="flex items-center justify-center h-32 text-text-tertiary text-sm">
+          <div
+            className="flex items-center justify-center h-32 text-sm"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
             Loading tags...
           </div>
         )}
 
         {/* Empty State */}
         {!isLoading && tags.length === 0 && (
-          <div className="flex items-center justify-center h-32 text-text-tertiary text-sm">
+          <div
+            className="flex items-center justify-center h-32 text-sm"
+            style={{ color: "var(--color-text-tertiary)" }}
+          >
             No tags found. Tags are created when added to skills.
           </div>
         )}
@@ -106,7 +153,8 @@ export function TagManagementPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.15 }}
-              className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-3.5 border-b border-glass-border/50 last:border-0 items-center hover:bg-black/[0.02] transition-colors"
+              className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-4 items-center hover:bg-black/[0.02] transition-colors"
+              style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }}
             >
               {/* Tag Name */}
               <div className="min-w-0">
@@ -121,10 +169,18 @@ export function TagManagementPage() {
                     }}
                     onBlur={handleSaveEdit}
                     autoFocus
-                    className="w-full text-sm px-2.5 py-1.5 rounded-lg border border-accent/40 bg-white outline-none focus:border-accent transition-colors"
+                    className="w-full text-sm px-3 py-2 rounded-lg outline-none"
+                    style={{
+                      background: "rgba(0,113,227,0.08)",
+                      border: "1px solid var(--color-apple-blue)",
+                      letterSpacing: "-0.374px"
+                    }}
                   />
                 ) : (
-                  <span className="text-sm font-medium text-text-primary truncate block">
+                  <span
+                    className="text-sm font-medium text-[var(--color-text-primary)] truncate block"
+                    style={{ letterSpacing: "-0.224px" }}
+                  >
                     {tag.name}
                   </span>
                 )}
@@ -132,8 +188,11 @@ export function TagManagementPage() {
 
               {/* Skill Count */}
               <div className="text-right pr-4">
-                <span className="text-xs text-text-secondary tabular-nums">
-                  {tag.skill_count} skill{tag.skill_count !== 1 ? "s" : ""}
+                <span
+                  className="text-sm text-[var(--color-text-secondary)] tabular-nums"
+                  style={{ letterSpacing: "-0.224px" }}
+                >
+                  {tag.skill_count}
                 </span>
               </div>
 
@@ -142,7 +201,8 @@ export function TagManagementPage() {
                 {editingTag === tag.name ? (
                   <button
                     onClick={handleCancelEdit}
-                    className="text-xs px-2.5 py-1.5 rounded-lg text-text-secondary hover:bg-black/[0.05] transition-colors cursor-pointer"
+                    className="text-sm px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                    style={{ color: "var(--color-text-secondary)" }}
                   >
                     Cancel
                   </button>
@@ -150,7 +210,7 @@ export function TagManagementPage() {
                   <button
                     onClick={() => handleStartEdit(tag)}
                     disabled={renameMutation.isPending}
-                    className="text-xs px-2.5 py-1.5 rounded-lg text-text-secondary hover:bg-accent/10 hover:text-accent transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="btn-pill-link text-xs py-1 px-3 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Rename
                   </button>
@@ -162,11 +222,12 @@ export function TagManagementPage() {
                 <button
                   onClick={() => handleDelete(tag.name)}
                   disabled={deleteMutation.isPending}
-                  className={`text-xs px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer font-medium ${
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer font-medium ${
                     confirmDelete === tag.name
-                      ? "bg-danger text-white border-danger hover:bg-danger-hover"
-                      : "border-glass-border text-text-secondary hover:border-danger hover:text-danger"
-                  } disabled:opacity-40 disabled:cursor-not-allowed`}
+                      ? "bg-[var(--color-danger)] text-white border-[var(--color-danger)]"
+                      : "border-[rgba(0,0,0,0.12)] text-[var(--color-text-secondary)] hover:border-[var(--color-danger)] hover:text-[var(--color-danger)]"
+                  }`}
+                  style={{ letterSpacing: "-0.224px" }}
                 >
                   {confirmDelete === tag.name ? "Confirm" : "Delete"}
                 </button>
@@ -177,7 +238,10 @@ export function TagManagementPage() {
       </div>
 
       {/* Help Text */}
-      <p className="text-xs text-text-tertiary mt-4 text-center">
+      <p
+        className="text-xs text-center mt-5"
+        style={{ color: "var(--color-text-tertiary)" }}
+      >
         Tags are automatically created when added to skills. Deleting a tag removes it from all skills.
       </p>
     </div>

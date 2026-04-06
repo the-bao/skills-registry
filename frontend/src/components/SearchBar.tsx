@@ -21,8 +21,9 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
 
   return (
     <div className="relative">
+      {/* Search icon */}
       <svg
-        className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary"
+        className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-tertiary)]"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -30,7 +31,7 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth={2}
+          strokeWidth={1.5}
           d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
         />
       </svg>
@@ -40,7 +41,11 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search skills... (⌘K)"
-        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-glass-border bg-glass backdrop-blur-xl text-sm text-text-primary placeholder:text-text-tertiary outline-none focus:border-accent/40 focus:ring-2 focus:ring-accent/10 transition-all"
+        className="btn-filter w-full pl-11 pr-4 py-2.5 outline-none transition-all"
+        style={{
+          fontSize: "14px",
+          letterSpacing: "-0.224px"
+        }}
       />
     </div>
   );

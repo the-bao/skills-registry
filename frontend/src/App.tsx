@@ -150,7 +150,7 @@ function App() {
   const importable = importableData ?? [];
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen" style={{ background: "var(--color-light-gray)" }}>
       <Sidebar
         tags={tags}
         selectedTag={selectedTag}
@@ -159,78 +159,92 @@ function App() {
         comboCount={combosData?.total ?? 0}
       />
 
-      <main className="flex-1 p-6">
-        {/* Tab Switcher */}
-        <div className="max-w-5xl mx-auto mb-4">
-          <div className="inline-flex rounded-xl bg-white border border-glass-border p-1 gap-0.5">
-            <button
-              onClick={() => setActiveTab("skills")}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                activeTab === "skills"
-                  ? "bg-accent text-white"
-                  : "text-text-secondary hover:bg-black/[0.03]"
-              }`}
+      <main className="flex-1">
+        {/* Hero Section - Black */}
+        <section
+          className="px-8 pt-10 pb-8"
+          style={{ background: "var(--color-black)" }}
+        >
+          {/* Tab Switcher - Apple style */}
+          <div className="max-w-5xl mx-auto mb-8">
+            <div
+              className="inline-flex rounded-full p-1 gap-1"
+              style={{ background: "rgba(255,255,255,0.1)" }}
             >
-              Skills
-            </button>
-            <button
-              onClick={() => setActiveTab("combinations")}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                activeTab === "combinations"
-                  ? "bg-accent text-white"
-                  : "text-text-secondary hover:bg-black/[0.03]"
-              }`}
-            >
-              Combinations
-            </button>
-            <button
-              onClick={() => setActiveTab("tags")}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                activeTab === "tags"
-                  ? "bg-accent text-white"
-                  : "text-text-secondary hover:bg-black/[0.03]"
-              }`}
-            >
-              Tags
-            </button>
+              {(["skills", "combinations", "tags"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all cursor-pointer capitalize ${
+                    activeTab === tab
+                      ? "bg-white text-black"
+                      : "text-white/70 hover:text-white"
+                  }`}
+                  style={{
+                    letterSpacing: "-0.224px",
+                    lineHeight: 1.43
+                  }}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {activeTab === "skills" ? (
+          {/* Header & Actions */}
           <div className="max-w-5xl mx-auto">
-            {/* Header */}
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-4">
               <div className="flex-1">
                 <SearchBar value={search} onChange={setSearch} />
               </div>
               <button
                 onClick={() => setShowImportModal(true)}
-                className="shrink-0 text-sm px-4 py-2.5 rounded-xl border border-glass-border text-text-secondary hover:bg-black/[0.03] transition-colors cursor-pointer"
+                className="shrink-0 text-sm px-5 py-2.5 rounded-full border border-white/20 text-white hover:bg-white/10 transition-colors cursor-pointer"
+                style={{
+                  letterSpacing: "-0.224px",
+                  fontWeight: 400
+                }}
               >
                 Import
               </button>
               <button
                 onClick={() => setShowGithubModal(true)}
-                className="shrink-0 text-sm px-4 py-2.5 rounded-xl border border-glass-border text-text-secondary hover:bg-black/[0.03] transition-colors cursor-pointer"
+                className="shrink-0 text-sm px-5 py-2.5 rounded-full border border-white/20 text-white hover:bg-white/10 transition-colors cursor-pointer"
+                style={{
+                  letterSpacing: "-0.224px",
+                  fontWeight: 400
+                }}
               >
                 GitHub
               </button>
               <button
                 onClick={() => setShowAddModal(true)}
-                className="shrink-0 text-sm px-4 py-2.5 rounded-xl bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer font-medium"
+                className="shrink-0 text-sm px-5 py-2.5 rounded-full bg-[var(--color-apple-blue)] text-white hover:bg-[var(--color-apple-blue-hover)] transition-colors cursor-pointer font-medium"
+                style={{
+                  letterSpacing: "-0.224px"
+                }}
               >
                 + Add Skill
               </button>
             </div>
-
-            {/* Grid */}
-            <SkillGrid skills={skills} onSelect={handleSelectSkill} />
           </div>
-        ) : activeTab === "combinations" ? (
-          <CombinationsPage allSkills={skills} />
-        ) : (
-          <TagManagementPage />
-        )}
+        </section>
+
+        {/* Content Section - Light Gray */}
+        <section
+          className="px-8 py-8"
+          style={{ background: "var(--color-light-gray)" }}
+        >
+          {activeTab === "skills" ? (
+            <div className="max-w-5xl mx-auto">
+              <SkillGrid skills={skills} onSelect={handleSelectSkill} />
+            </div>
+          ) : activeTab === "combinations" ? (
+            <CombinationsPage allSkills={skills} />
+          ) : (
+            <TagManagementPage />
+          )}
+        </section>
       </main>
 
       {/* Modals */}
