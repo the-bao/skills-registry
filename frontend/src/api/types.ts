@@ -115,3 +115,12 @@ export interface SkillAutoTagResult {
   name: string;
   tags_added: string[];
 }
+
+export interface InstallSkillRequest {
+  target_dir?: string;
+}
+
+export interface InstallSkillResponse {
+  installed: string;
+  path: string;
+}

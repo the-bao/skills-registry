@@ -7,7 +7,7 @@ interface SkillDetailProps {
   allTags: string[];
   onClose: () => void;
   onDelete: (name: string) => void;
-  onInstall: (name: string) => void;
+  onInstall: (name: string, targetDir?: string) => void;
   onAddTag: (name: string, tag: string) => void;
   onRemoveTag: (name: string, tag: string) => void;
   onSuggestTags: (name: string) => Promise<string[]>;
@@ -28,6 +28,8 @@ export function SkillDetail({
   const [newTag, setNewTag] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const [showInstallOptions, setShowInstallOptions] = useState(false);
+  const [installTargetDir, setInstallTargetDir] = useState("");
 
   const handleAddTag = () => {
     const t = newTag.trim();
@@ -43,6 +45,13 @@ export function SkillDetail({
       return;
     }
     onDelete(skill.name);
+  };
+
+  const handleInstall = () => {
+    const targetDir = installTargetDir.trim() || undefined;
+    onInstall(skill.name, targetDir);
+    setShowInstallOptions(false);
+    setInstallTargetDir("");
   };
 
   return (
@@ -201,26 +210,75 @@ export function SkillDetail({
 
             {/* Actions */}
             <div
-              className="flex gap-3 pt-5"
+              className="pt-5"
               style={{ borderTop: "1px solid rgba(0,0,0,0.08)" }}
             >
-              <button
-                onClick={() => onInstall(skill.name)}
-                className="btn-primary-blue flex-1"
-              >
-                Install
-              </button>
-              <button
-                onClick={handleDelete}
-                className={`text-sm px-5 py-2.5 rounded-full border transition-colors cursor-pointer font-medium ${
-                  confirmDelete
-                    ? "bg-[var(--color-danger)] text-white border-[var(--color-danger)]"
-                    : "border-[rgba(0,0,0,0.12)] text-[var(--color-text-secondary)] hover:border-[var(--color-danger)] hover:text-[var(--color-danger)]"
-                }`}
-                style={{ letterSpacing: "-0.224px" }}
-              >
-                {confirmDelete ? "Confirm Delete" : "Delete"}
-              </button>
+              {showInstallOptions ? (
+                /* Install Options Panel */
+                <div className="space-y-3">
+                  <p
+                    className="text-xs font-medium text-[var(--color-text-tertiary)]"
+                    style={{ letterSpacing: "-0.224px" }}
+                  >
+                    Install to custom directory (optional)
+                  </p>
+                  <input
+                    type="text"
+                    value={installTargetDir}
+                    onChange={(e) => setInstallTargetDir(e.target.value)}
+                    placeholder="e.g. /path/to/your/project (will create .claude/skills)"
+                    className="w-full text-sm px-3 py-2 rounded-lg outline-none"
+                    style={{
+                      background: "rgba(0,0,0,0.04)",
+                      border: "1px solid rgba(0,0,0,0.06)",
+                      letterSpacing: "-0.374px"
+                    }}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setShowInstallOptions(false);
+                        setInstallTargetDir("");
+                      }}
+                      className="flex-1 text-sm px-4 py-2.5 rounded-full border transition-colors cursor-pointer"
+                      style={{
+                        borderColor: "rgba(0,0,0,0.12)",
+                        color: "var(--color-text-secondary)",
+                        letterSpacing: "-0.224px"
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleInstall}
+                      className="flex-1 btn-primary-blue"
+                    >
+                      {installTargetDir.trim() ? `Install to ${installTargetDir.trim()}` : "Install to Global"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Default Actions */
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowInstallOptions(true)}
+                    className="btn-primary-blue flex-1"
+                  >
+                    Install
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className={`text-sm px-5 py-2.5 rounded-full border transition-colors cursor-pointer font-medium ${
+                      confirmDelete
+                        ? "bg-[var(--color-danger)] text-white border-[var(--color-danger)]"
+                        : "border-[rgba(0,0,0,0.12)] text-[var(--color-text-secondary)] hover:border-[var(--color-danger)] hover:text-[var(--color-danger)]"
+                    }`}
+                    style={{ letterSpacing: "-0.224px" }}
+                  >
+                    {confirmDelete ? "Confirm Delete" : "Delete"}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>

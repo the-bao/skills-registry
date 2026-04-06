@@ -62,7 +62,8 @@ function App() {
   });
 
   const installMutation = useMutation({
-    mutationFn: api.installSkill,
+    mutationFn: ({ name, targetDir }: { name: string; targetDir?: string }) =>
+      api.installSkill(name, targetDir),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["skills"] });
     },
@@ -256,7 +257,7 @@ function App() {
             allTags={tags}
             onClose={() => setSelectedSkill(null)}
             onDelete={(name) => deleteMutation.mutate(name)}
-            onInstall={(name) => installMutation.mutate(name)}
+            onInstall={(name, targetDir) => installMutation.mutate({ name, targetDir })}
             onAddTag={(name, tag) => addTagMutation.mutate({ name, tag })}
             onRemoveTag={(name, tag) => removeTagMutation.mutate({ name, tag })}
             onSuggestTags={(name) => suggestTagsMutation.mutateAsync(name).then((res) => res.suggested)}

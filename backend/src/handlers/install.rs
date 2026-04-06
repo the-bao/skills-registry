@@ -124,10 +124,16 @@ pub async fn import_skills(
     Ok(Json(ImportResponse { imported, failed }))
 }
 
-/// Install a skill from registry to ~/.claude/skills/
+#[derive(Debug, Deserialize)]
+pub struct InstallSkillRequest {
+    pub target_dir: Option<String>,
+}
+
+/// Install a skill from registry to {target_dir}/.claude/skills/{skill_name}
 pub async fn install_skill(
     State(state): State<AppState>,
     Path(name): Path<String>,
+    Json(body): Json<InstallSkillRequest>,
 ) -> Result<Json<serde_json::Value>, AppError> {
     let skill = state
         .store
@@ -142,12 +148,36 @@ pub async fn install_skill(
         )));
     }
 
-    let dest = state.skills_install_path.join(&name);
-    fs::create_dir_all(&state.skills_install_path)?;
+    let install_base = match &body.target_dir {
+        Some(dir) => {
+            let base = PathBuf::from(dir);
+            let claude_dir = base.join(".claude");
+            let skills_dir = claude_dir.join("skills");
 
+            // Check if .claude directory already exists (meaning we've installed before)
+            if claude_dir.exists() {
+                return Err(AppError::BadRequest(format!(
+                    "Installation directory '{}' already contains a .claude folder. \
+                    Please choose a different directory or remove the existing one.",
+                    dir
+                )));
+            }
+
+            fs::create_dir_all(&skills_dir)?;
+            skills_dir
+        }
+        None => {
+            let dest = state.skills_install_path.join(&name);
+            fs::create_dir_all(&state.skills_install_path)?;
+            copy_dir_recursive(&src, &dest)?;
+            return Ok(Json(serde_json::json!({ "installed": name, "path": dest.to_string_lossy() })));
+        }
+    };
+
+    let dest = install_base.join(&name);
     copy_dir_recursive(&src, &dest)?;
 
-    Ok(Json(serde_json::json!({ "installed": name })))
+    Ok(Json(serde_json::json!({ "installed": name, "path": dest.to_string_lossy() })))
 }
 
 fn copy_dir_recursive(src: &PathBuf, dst: &PathBuf) -> Result<(), AppError> {

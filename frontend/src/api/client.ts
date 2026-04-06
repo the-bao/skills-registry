@@ -76,8 +76,11 @@ export const api = {
       method: "DELETE",
     }),
 
-  installSkill: (name: string) =>
-    request<{ installed: string }>(`/skills/${encodeURIComponent(name)}/install`, { method: "POST" }),
+  installSkill: (name: string, targetDir?: string) =>
+    request<{ installed: string; path: string }>(`/skills/${encodeURIComponent(name)}/install`, {
+      method: "POST",
+      body: JSON.stringify({ target_dir: targetDir }),
+    }),
 
   listImportable: () => request<ImportableSkill[]>("/skills/importable"),
 
