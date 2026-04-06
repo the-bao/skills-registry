@@ -7,6 +7,7 @@ use std::path::PathBuf;
 use crate::error::AppError;
 use crate::handlers::skills::AppState;
 use crate::models::Combination;
+use crate::models::Workflow;
 
 #[derive(Debug, Serialize)]
 pub struct CombinationListResponse {
@@ -41,6 +42,8 @@ pub struct CreateCombinationRequest {
     pub name: String,
     pub description: String,
     pub skills: Vec<String>,
+    #[serde(default)]
+    pub workflow: Option<Workflow>,
 }
 
 pub async fn create_combination(
@@ -63,6 +66,7 @@ pub async fn create_combination(
         name: name.to_string(),
         description: body.description,
         skills: body.skills,
+        workflow: body.workflow,
     };
 
     state.store.put_combination(&combo)?;
@@ -74,6 +78,7 @@ pub struct UpdateCombinationRequest {
     pub name: Option<String>,
     pub description: Option<String>,
     pub skills: Option<Vec<String>>,
+    pub workflow: Option<Workflow>,
 }
 
 pub async fn update_combination(
@@ -104,6 +109,9 @@ pub async fn update_combination(
     }
     if let Some(skills) = body.skills {
         combo.skills = skills;
+    }
+    if let Some(workflow) = body.workflow {
+        combo.workflow = Some(workflow);
     }
 
     state.store.put_combination(&combo)?;
