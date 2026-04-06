@@ -154,12 +154,12 @@ pub async fn install_skill(
             let claude_dir = base.join(".claude");
             let skills_dir = claude_dir.join("skills");
 
-            // Check if .claude directory already exists (meaning we've installed before)
-            if claude_dir.exists() {
+            // Check if the specific skill already exists in .claude/skills/
+            if skills_dir.join(&name).exists() {
                 return Err(AppError::BadRequest(format!(
-                    "Installation directory '{}' already contains a .claude folder. \
-                    Please choose a different directory or remove the existing one.",
-                    dir
+                    "Skill '{}' is already installed in '{}'/.claude/skills. \
+                    Please choose a different directory or remove the existing skill first.",
+                    name, dir
                 )));
             }
 
@@ -168,6 +168,15 @@ pub async fn install_skill(
         }
         None => {
             let dest = state.skills_install_path.join(&name);
+
+            // Check if this skill already exists in the global install path
+            if dest.exists() {
+                return Err(AppError::BadRequest(format!(
+                    "Skill '{}' is already installed globally. Please remove it first or use a custom directory.",
+                    name
+                )));
+            }
+
             fs::create_dir_all(&state.skills_install_path)?;
             copy_dir_recursive(&src, &dest)?;
             return Ok(Json(serde_json::json!({ "installed": name, "path": dest.to_string_lossy() })));
