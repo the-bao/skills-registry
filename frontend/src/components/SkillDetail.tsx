@@ -253,7 +253,7 @@ export function SkillDetail({
                       onClick={handleInstall}
                       className="flex-1 btn-primary-blue"
                     >
-                      {installTargetDir.trim() ? `Install to ${installTargetDir.trim()}` : "Install to Global"}
+                      {installTargetDir.trim() ? "Install to Custom" : "Install to Global"}
                     </button>
                   </div>
                 </div>
