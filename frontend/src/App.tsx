@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { api } from "./api/client";
 import type { Skill } from "./api/types";
 import { SearchBar } from "./components/SearchBar";
@@ -14,6 +14,12 @@ import { CombinationsPage } from "./components/CombinationsPage";
 import { SuggestTagsModal } from "./components/SuggestTagsModal";
 import { TagManagementPage } from "./components/TagManagementPage";
 
+interface Toast {
+  id: number;
+  message: string;
+  type: "success" | "error";
+}
+
 function App() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
@@ -23,6 +29,7 @@ function App() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showGithubModal, setShowGithubModal] = useState(false);
   const [activeTab, setActiveTab] = useState<"skills" | "combinations" | "tags">("skills");
+  const [toasts, setToasts] = useState<Toast[]>([]);
   const [suggestModal, setSuggestModal] = useState<{
     open: boolean;
     skillName: string;
@@ -30,6 +37,18 @@ function App() {
     existingTags: string[];
     isAdding: boolean;
   } | null>(null);
+
+  const showToast = useCallback((message: string, type: "success" | "error" = "success") => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3000);
+  }, []);
+
+  const removeToast = useCallback((id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   const { data: skillsData } = useQuery({
     queryKey: ["skills", search, selectedTag],
@@ -64,8 +83,12 @@ function App() {
   const installMutation = useMutation({
     mutationFn: ({ name, targetDir }: { name: string; targetDir?: string }) =>
       api.installSkill(name, targetDir),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["skills"] });
+      showToast(`"${data.installed}" installed successfully to ${data.path}`);
+    },
+    onError: (error: Error) => {
+      showToast(error.message, "error");
     },
   });
 
@@ -247,6 +270,50 @@ function App() {
           )}
         </section>
       </main>
+
+      {/* Toast Notifications */}
+      <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-2">
+        <AnimatePresence>
+          {toasts.map((toast) => (
+            <motion.div
+              key={toast.id}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg max-w-sm"
+              style={{
+                background: toast.type === "success" ? "#1d1d1f" : "#ff3b30",
+                color: "#ffffff",
+              }}
+            >
+              {toast.type === "success" ? (
+                <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+              <span
+                className="text-sm flex-1"
+                style={{ letterSpacing: "-0.224px" }}
+              >
+                {toast.message}
+              </span>
+              <button
+                onClick={() => removeToast(toast.id)}
+                className="shrink-0 opacity-70 hover:opacity-100 transition-opacity"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
 
       {/* Modals */}
       <AnimatePresence>
