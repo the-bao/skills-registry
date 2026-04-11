@@ -1,6 +1,6 @@
 # Skills Registry
 
-A local management system for Claude Code skills, with a macOS-style web interface.
+Browse, tag, and install AI agent skills from one place. Skills Registry supports Claude Code, OpenClaw, Codex, and more.
 
 [中文文档](#中文)
 
@@ -295,7 +295,7 @@ MIT
 
 # Skills Registry（中文）
 
-Claude Code 本地 skill 仓库管理系统，提供 macOS 风格的 Web 管理界面。
+统一管理 AI Agent Skills 的可视化平台，支持 Claude Code、OpenClaw、Codex 等，一站式浏览、标签与安装。
 
 ## 功能
 
