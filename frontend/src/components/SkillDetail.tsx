@@ -247,8 +247,8 @@ export function SkillDetail({
                   <div className="flex gap-2">
                     <button
                       onClick={() => { setShowInstallOptions(false); }}
-                      className="flex-1 text-sm px-4 py-2.5 rounded-full border transition-colors cursor-pointer"
-                      style={{ borderColor: "rgba(0,0,0,0.12)", color: "var(--color-text-secondary)", letterSpacing: "-0.224px" }}
+                      className="flex-1 text-xs px-4 py-1.5 rounded-full border transition-colors cursor-pointer"
+                      style={{ borderColor: "rgba(0,0,0,0.12)", color: "var(--color-text-secondary)", letterSpacing: "-0.1px" }}
                     >
                       Cancel
                     </button>
@@ -272,12 +272,12 @@ export function SkillDetail({
                   </button>
                   <button
                     onClick={handleDelete}
-                    className={`text-sm px-5 py-2.5 rounded-full border transition-colors cursor-pointer font-medium ${
+                    className={`text-xs px-4 py-1.5 rounded-full border transition-colors cursor-pointer font-medium ${
                       confirmDelete
                         ? "bg-[var(--color-danger)] text-white border-[var(--color-danger)]"
                         : "border-[rgba(0,0,0,0.12)] text-[var(--color-text-secondary)] hover:border-[var(--color-danger)] hover:text-[var(--color-danger)]"
                     }`}
-                    style={{ letterSpacing: "-0.224px" }}
+                    style={{ letterSpacing: "-0.1px" }}
                   >
                     {confirmDelete ? "Confirm Delete" : "Delete"}
                   </button>
