@@ -26,17 +26,25 @@ pub struct ImportResponse {
     pub failed: Vec<String>,
 }
 
+/// List all configured AI agents
+pub async fn list_agents(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<crate::models::Agent>>, AppError> {
+    Ok(Json(state.agents.clone()))
+}
+
 /// List skills available for import from ~/.claude/skills/
 pub async fn list_importable(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<ImportableSkill>>, AppError> {
     let mut importable = Vec::new();
 
-    if !state.skills_install_path.exists() {
+    let install_path = state.agents.first().map(|a| a.skills_path.clone()).unwrap_or_default();
+    if !install_path.exists() {
         return Ok(Json(importable));
     }
 
-    for entry in fs::read_dir(&state.skills_install_path)? {
+    for entry in fs::read_dir(&install_path)? {
         let entry = entry?;
         if !entry.file_type()?.is_dir() {
             continue;
@@ -79,9 +87,10 @@ pub async fn import_skills(
 ) -> Result<Json<ImportResponse>, AppError> {
     let mut imported = Vec::new();
     let mut failed = Vec::new();
+    let install_path = state.agents.first().map(|a| a.skills_path.clone()).unwrap_or_default();
 
     for name in body.names {
-        let src = state.skills_install_path.join(&name);
+        let src = install_path.join(&name);
         if !src.exists() || !src.join("SKILL.md").exists() {
             failed.push(name);
             continue;
@@ -167,7 +176,8 @@ pub async fn install_skill(
             skills_dir
         }
         None => {
-            let dest = state.skills_install_path.join(&name);
+            let install_path = state.agents.first().map(|a| a.skills_path.clone()).unwrap_or_default();
+            let dest = install_path.join(&name);
 
             // Check if this skill already exists in the global install path
             if dest.exists() {
@@ -177,7 +187,7 @@ pub async fn install_skill(
                 )));
             }
 
-            fs::create_dir_all(&state.skills_install_path)?;
+            fs::create_dir_all(&install_path)?;
             copy_dir_recursive(&src, &dest)?;
             return Ok(Json(serde_json::json!({ "installed": name, "path": dest.to_string_lossy() })));
         }

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Skill {
@@ -39,4 +40,15 @@ pub struct Combination {
     pub skills: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub workflow: Option<Workflow>,
+}
+
+/// A configured AI agent that can receive skill installs
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Agent {
+    /// Machine identifier, e.g. "claude-code"
+    pub id: String,
+    /// Human-readable name, e.g. "Claude Code"
+    pub name: String,
+    /// Absolute path to this agent's global skills directory
+    pub skills_path: PathBuf,
 }

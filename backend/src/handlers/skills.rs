@@ -7,17 +7,24 @@ use std::sync::Arc;
 
 use crate::error::AppError;
 use crate::models::Skill;
+use crate::models::Agent;
 use crate::store::Store;
 
 #[derive(Debug, Clone)]
 pub struct AppState {
     pub store: Arc<Store>,
     pub registry_path: PathBuf,
-    pub skills_install_path: PathBuf,
+    pub agents: Vec<Agent>,
     pub http_client: reqwest::Client,
     pub anthropic_api_key: String,
     pub anthropic_base_url: String,
     pub anthropic_model: String,
+}
+
+impl AppState {
+    pub fn get_agent(&self, agent_id: &str) -> Option<&Agent> {
+        self.agents.iter().find(|a| a.id == agent_id)
+    }
 }
 
 #[derive(Debug, Deserialize)]

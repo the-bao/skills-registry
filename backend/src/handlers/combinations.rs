@@ -143,6 +143,7 @@ pub async fn install_combination(
 
     let mut installed = Vec::new();
     let mut failed = Vec::new();
+    let install_path = state.agents.first().map(|a| a.skills_path.clone()).unwrap_or_default();
 
     for skill_name in &combo.skills {
         let skill = match state.store.get_skill(skill_name)? {
@@ -159,7 +160,7 @@ pub async fn install_combination(
             continue;
         }
 
-        let dest = state.skills_install_path.join(skill_name);
+        let dest = install_path.join(skill_name);
         match copy_dir_recursive(&src, &dest) {
             Ok(_) => installed.push(skill_name.clone()),
             Err(_) => failed.push(skill_name.clone()),

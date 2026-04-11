@@ -4,7 +4,7 @@ use std::path::PathBuf;
 pub struct Config {
     pub registry_path: PathBuf,
     pub db_path: PathBuf,
-    pub skills_install_path: PathBuf,
+    pub agents: Vec<crate::models::Agent>,
     pub port: u16,
     pub anthropic_api_key: String,
     pub anthropic_base_url: String,
@@ -39,9 +39,25 @@ impl Config {
             .map(PathBuf::from)
             .unwrap_or_else(|_| base.join("data").join("registry.db"));
 
-        let skills_install_path = std::env::var("SKILLS_INSTALL_PATH")
-            .map(PathBuf::from)
-            .unwrap_or_else(|_| home.join(".claude").join("skills"));
+        let mut agents = default_agents(&home);
+
+        // Per-agent env overrides: AGENT_{ID_UPPERCASE}_PATH
+        for agent in &mut agents {
+            let env_key = format!("AGENT_{}_PATH", agent.id.to_uppercase().replace('-', "_"));
+            if let Ok(path) = std::env::var(&env_key) {
+                agent.skills_path = PathBuf::from(path);
+            }
+        }
+
+        // Legacy: SKILLS_INSTALL_PATH overrides claude-code agent's path
+        if let Ok(path) = std::env::var("SKILLS_INSTALL_PATH") {
+            for agent in &mut agents {
+                if agent.id == "claude-code" {
+                    agent.skills_path = PathBuf::from(path);
+                    break;
+                }
+            }
+        }
 
         let port = std::env::var("PORT")
             .ok()
@@ -57,13 +73,34 @@ impl Config {
         Self {
             registry_path,
             db_path,
-            skills_install_path,
+            agents,
             port,
             anthropic_api_key,
             anthropic_base_url,
             anthropic_model,
         }
     }
+}
+
+fn default_agents(home: &PathBuf) -> Vec<crate::models::Agent> {
+    use crate::models::Agent;
+    vec![
+        Agent {
+            id: "claude-code".into(),
+            name: "Claude Code".into(),
+            skills_path: home.join(".claude").join("skills"),
+        },
+        Agent {
+            id: "openclaw".into(),
+            name: "OpenClaw".into(),
+            skills_path: home.join(".claude").join("skills"),
+        },
+        Agent {
+            id: "codex".into(),
+            name: "Codex".into(),
+            skills_path: home.join(".codex").join("skills"),
+        },
+    ]
 }
 
 mod dirs_sys {

@@ -39,7 +39,7 @@ async fn main() {
     let state = AppState {
         store: Arc::new(store),
         registry_path: config.registry_path.clone(),
-        skills_install_path: config.skills_install_path.clone(),
+        agents: config.agents.clone(),
         http_client: reqwest::Client::new(),
         anthropic_api_key: config.anthropic_api_key.clone(),
         anthropic_base_url: config.anthropic_base_url.clone(),
@@ -63,6 +63,8 @@ async fn main() {
         .route("/combinations", get(handlers::combinations::list_combinations).post(handlers::combinations::create_combination))
         .route("/combinations/{name}", get(handlers::combinations::get_combination).delete(handlers::combinations::delete_combination).put(handlers::combinations::update_combination))
         .route("/combinations/{name}/install", post(handlers::combinations::install_combination))
+        // Agents
+        .route("/agents", get(handlers::install::list_agents))
         // Install/Import
         .route("/skills/{name}/install", post(handlers::install::install_skill))
         .route("/skills/import", post(handlers::install::import_skills))
