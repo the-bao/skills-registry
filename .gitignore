@@ -35,3 +35,6 @@ registry/*
 
 # Apple design folder (local reference)
 apple/
+
+# Claude Code guidance
+CLAUDE.md

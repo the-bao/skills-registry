@@ -76,6 +76,41 @@ cd backend && cargo run
 cd frontend && npm run dev
 ```
 
+## Docker
+
+### Build Image
+
+```bash
+docker build -t skills-registry:latest .
+```
+
+### Run Container
+
+```bash
+docker run -d -p 3000:3000 \
+  -v $(pwd)/registry:/app/registry \
+  -v $(pwd)/data:/app/data \
+  -e ANTHROPIC_AUTH_TOKEN=your-api-key \
+  skills-registry:latest
+```
+
+**Environment variables:**
+
+| Variable | Default | Required | Description |
+|----------|---------|----------|-------------|
+| `ANTHROPIC_AUTH_TOKEN` | — | Yes | API key for AI auto-tagging |
+| `ANTHROPIC_BASE_URL` | `https://api.anthropic.com` | No | AI API endpoint |
+| `ANTHROPIC_MODEL` | `claude-sonnet-4-20250514` | No | AI model for tag suggestions |
+
+**Volumes:**
+
+| Path | Description |
+|------|-------------|
+| `/app/registry` | Skill storage directory |
+| `/app/data` | Database files |
+
+Open http://localhost:3000 after starting.
+
 ## Configuration
 
 Configuration is loaded from `.env` file in the project root (see `.env.example` for template).
@@ -259,6 +294,41 @@ cd backend && cargo run
 # 终端 2 — 前端（/api 代理到 localhost:3000）
 cd frontend && npm run dev
 ```
+
+## Docker
+
+### 构建镜像
+
+```bash
+docker build -t skills-registry:latest .
+```
+
+### 运行容器
+
+```bash
+docker run -d -p 3000:3000 \
+  -v $(pwd)/registry:/app/registry \
+  -v $(pwd)/data:/app/data \
+  -e ANTHROPIC_AUTH_TOKEN=your-api-key \
+  skills-registry:latest
+```
+
+**环境变量：**
+
+| 变量 | 默认值 | 必填 | 说明 |
+|------|--------|------|------|
+| `ANTHROPIC_AUTH_TOKEN` | — | 是 | AI 自动标签 API 密钥 |
+| `ANTHROPIC_BASE_URL` | `https://api.anthropic.com` | 否 | AI API 地址 |
+| `ANTHROPIC_MODEL` | `claude-sonnet-4-20250514` | 否 | AI 模型 |
+
+**数据卷：**
+
+| 路径 | 说明 |
+|------|------|
+| `/app/registry` | Skill 存储目录 |
+| `/app/data` | 数据库文件 |
+
+启动后访问 http://localhost:3000。
 
 ## 配置
 
