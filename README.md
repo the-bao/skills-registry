@@ -200,32 +200,6 @@ The auto-tagging feature is compatible with any Anthropic Messages API-compatibl
 
 Detected automatically by `ANTHROPIC_BASE_URL` containing `bigmodel` or `zhipu` (uses Bearer auth), otherwise uses `x-api-key` header.
 
-## API
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/skills?q=&tag=` | List skills (search + tag filter) |
-| GET | `/api/skills/:name` | Get skill metadata |
-| POST | `/api/skills` | Add skill from local directory |
-| DELETE | `/api/skills/:name` | Delete skill |
-| GET | `/api/tags` | List all tags |
-| GET | `/api/tags/detail` | List tags with skill counts |
-| PUT | `/api/tags/:tag` | Rename a tag |
-| DELETE | `/api/tags/:tag` | Delete a tag (removes from all skills) |
-| POST | `/api/skills/:name/tags` | Add tag to skill |
-| DELETE | `/api/skills/:name/tags/:tag` | Remove tag from skill |
-| POST | `/api/skills/:name/suggest-tags` | Get AI tag suggestions for a skill |
-| POST | `/api/skills/:name/install` | Install to `~/.claude/skills/` |
-| POST | `/api/skills/import` | Batch import from `~/.claude/skills/` |
-| GET | `/api/skills/importable` | List importable skills |
-| POST | `/api/github/import` | Import skills from a GitHub repository |
-| GET | `/api/combinations` | List all combinations |
-| GET | `/api/combinations/:name` | Get combination details |
-| POST | `/api/combinations` | Create a combination |
-| PUT | `/api/combinations/:name` | Update a combination |
-| DELETE | `/api/combinations/:name` | Delete a combination |
-| POST | `/api/combinations/:name/install` | Install all skills in a combination |
-
 ## Skill Format
 
 Each skill is a directory containing a `SKILL.md` with YAML frontmatter:
@@ -479,32 +453,6 @@ docker run -d -p 3000:3000 \
 - **MiniMax** — 类似配置
 
 通过 `ANTHROPIC_BASE_URL` 是否包含 `bigmodel` 或 `zhipu` 自动检测（使用 Bearer 认证），否则使用 `x-api-key` 头。
-
-## API
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/api/skills?q=&tag=` | 列出 skill（搜索 + 标签过滤） |
-| GET | `/api/skills/:name` | 获取 skill 元数据 |
-| POST | `/api/skills` | 从本地目录添加 skill |
-| DELETE | `/api/skills/:name` | 删除 skill |
-| GET | `/api/tags` | 列出所有标签 |
-| GET | `/api/tags/detail` | 列出标签及对应 skill 数量 |
-| PUT | `/api/tags/:tag` | 重命名标签 |
-| DELETE | `/api/tags/:tag` | 删除标签（从所有 skill 中移除） |
-| POST | `/api/skills/:name/tags` | 添加标签 |
-| DELETE | `/api/skills/:name/tags/:tag` | 移除标签 |
-| POST | `/api/skills/:name/suggest-tags` | 获取 AI 标签推荐 |
-| POST | `/api/skills/:name/install` | 安装到 `~/.claude/skills/` |
-| POST | `/api/skills/import` | 从 `~/.claude/skills/` 批量导入 |
-| GET | `/api/skills/importable` | 列出可导入的 skill |
-| POST | `/api/github/import` | 从 GitHub 仓库导入 skill |
-| GET | `/api/combinations` | 列出所有技能组合 |
-| GET | `/api/combinations/:name` | 获取技能组合详情 |
-| POST | `/api/combinations` | 创建技能组合 |
-| PUT | `/api/combinations/:name` | 更新技能组合 |
-| DELETE | `/api/combinations/:name` | 删除技能组合 |
-| POST | `/api/combinations/:name/install` | 安装组合内所有 skill |
 
 ## Skill 格式
 
