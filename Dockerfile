@@ -32,9 +32,10 @@ RUN cd /app/frontend && npm run build
 # =============================================================================
 FROM debian:bookworm-slim
 
-# Install CA certificates for HTTPS and required runtime deps
+# Install CA certificates for HTTPS, git for GitHub import, and required runtime deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user for security
