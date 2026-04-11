@@ -111,6 +111,30 @@ docker run -d -p 3000:3000 \
 
 Open http://localhost:3000 after starting.
 
+### Use with Claude Code or OpenClaw on Host
+
+To install skills directly into your host's Claude Code or OpenClaw via the container, mount the host's skills directory to the container's install target:
+
+```bash
+docker run -d -p 3000:3000 \
+  -v $(pwd)/registry:/app/registry \
+  -v $(pwd)/data:/app/data \
+  -v ~/.claude/skills:/home/appuser/.claude/skills \
+  -e SKILLS_INSTALL_PATH=/home/appuser/.claude/skills \
+  -e ANTHROPIC_AUTH_TOKEN=your-api-key \
+  skills-registry:latest
+```
+
+This allows you to:
+- Browse and manage skills in the web UI
+- Install skills from the registry to your host's Claude Code or OpenClaw
+- The installed skills become immediately available in Claude Code or OpenClaw running on the host
+
+**Path notes:**
+- Linux/macOS: `~/.claude/skills` → `/home/USER/.claude/skills`
+- The container runs as user `appuser` (UID 1000)
+- OpenClaw uses the same skills directory structure as Claude Code, so the same mount works for both
+
 ## Configuration
 
 Configuration is loaded from `.env` file in the project root (see `.env.example` for template).
@@ -329,6 +353,29 @@ docker run -d -p 3000:3000 \
 | `/app/data` | 数据库文件 |
 
 启动后访问 http://localhost:3000。
+
+### 与宿主机 Claude Code或OpenClaw 配合使用
+
+通过容器将 skill 直接安装到宿主机的 Claude Code或OpenClaw，只需将宿主机的 skills 目录挂载到容器的安装目标目录：
+
+```bash
+docker run -d -p 3000:3000 \
+  -v $(pwd)/registry:/app/registry \
+  -v $(pwd)/data:/app/data \
+  -v ~/.claude/skills:/home/appuser/.claude/skills \
+  -e SKILLS_INSTALL_PATH=/home/appuser/.claude/skills \
+  -e ANTHROPIC_AUTH_TOKEN=your-api-key \
+  skills-registry:latest
+```
+
+这样你就可以：
+- 在 Web 界面中浏览和管理 skills
+- 将 skills 从仓库安装到宿主机的 Claude Code
+- 安装后的 skills 可在宿主机上的 Claude Code 中直接使用
+
+**路径说明：**
+- Linux/macOS：`~/.claude/skills` → `/home/USER/.claude/skills`
+- 容器以用户 `appuser`（UID 1000）运行
 
 ## 配置
 
