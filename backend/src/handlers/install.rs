@@ -1,4 +1,4 @@
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -16,8 +16,14 @@ pub struct ImportableSkill {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct ListImportableQuery {
+    pub agent: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct ImportRequest {
     pub names: Vec<String>,
+    pub agent: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -33,13 +39,22 @@ pub async fn list_agents(
     Ok(Json(state.agents.clone()))
 }
 
-/// List skills available for import from ~/.claude/skills/
+/// List skills available for import from an agent's skills directory
 pub async fn list_importable(
     State(state): State<AppState>,
+    Query(query): Query<ListImportableQuery>,
 ) -> Result<Json<Vec<ImportableSkill>>, AppError> {
     let mut importable = Vec::new();
 
-    let install_path = state.agents.first().map(|a| a.skills_path.clone()).unwrap_or_default();
+    let install_path = match query.agent {
+        Some(ref agent_id) => {
+            let agent = state
+                .get_agent(agent_id)
+                .ok_or_else(|| AppError::BadRequest(format!("Unknown agent '{}'", agent_id)))?;
+            agent.skills_path.clone()
+        }
+        None => state.agents.first().map(|a| a.skills_path.clone()).unwrap_or_default(),
+    };
     if !install_path.exists() {
         return Ok(Json(importable));
     }
@@ -87,7 +102,15 @@ pub async fn import_skills(
 ) -> Result<Json<ImportResponse>, AppError> {
     let mut imported = Vec::new();
     let mut failed = Vec::new();
-    let install_path = state.agents.first().map(|a| a.skills_path.clone()).unwrap_or_default();
+    let install_path = match &body.agent {
+        Some(agent_id) => {
+            let agent = state
+                .get_agent(agent_id)
+                .ok_or_else(|| AppError::BadRequest(format!("Unknown agent '{}'", agent_id)))?;
+            agent.skills_path.clone()
+        }
+        None => state.agents.first().map(|a| a.skills_path.clone()).unwrap_or_default(),
+    };
 
     for name in body.names {
         let src = install_path.join(&name);
@@ -135,15 +158,19 @@ pub async fn import_skills(
 
 #[derive(Debug, Deserialize)]
 pub struct InstallSkillRequest {
-    pub target_dir: Option<String>,
+    pub agent: String,
 }
 
-/// Install a skill from registry to {target_dir}/.claude/skills/{skill_name}
+/// Install a skill from registry to the agent's skills directory
 pub async fn install_skill(
     State(state): State<AppState>,
     Path(name): Path<String>,
     Json(body): Json<InstallSkillRequest>,
 ) -> Result<Json<serde_json::Value>, AppError> {
+    let agent = state
+        .get_agent(&body.agent)
+        .ok_or_else(|| AppError::BadRequest(format!("Unknown agent '{}'", body.agent)))?;
+
     let skill = state
         .store
         .get_skill(&name)?
@@ -157,46 +184,22 @@ pub async fn install_skill(
         )));
     }
 
-    let install_base = match &body.target_dir {
-        Some(dir) => {
-            let base = PathBuf::from(dir);
-            let claude_dir = base.join(".claude");
-            let skills_dir = claude_dir.join("skills");
+    let dest = agent.skills_path.join(&name);
+    if dest.exists() {
+        return Err(AppError::BadRequest(format!(
+            "Skill '{}' is already installed for agent '{}'. Remove it first.",
+            name, agent.id
+        )));
+    }
 
-            // Check if the specific skill already exists in .claude/skills/
-            if skills_dir.join(&name).exists() {
-                return Err(AppError::BadRequest(format!(
-                    "Skill '{}' is already installed in '{}'/.claude/skills. \
-                    Please choose a different directory or remove the existing skill first.",
-                    name, dir
-                )));
-            }
-
-            fs::create_dir_all(&skills_dir)?;
-            skills_dir
-        }
-        None => {
-            let install_path = state.agents.first().map(|a| a.skills_path.clone()).unwrap_or_default();
-            let dest = install_path.join(&name);
-
-            // Check if this skill already exists in the global install path
-            if dest.exists() {
-                return Err(AppError::BadRequest(format!(
-                    "Skill '{}' is already installed globally. Please remove it first or use a custom directory.",
-                    name
-                )));
-            }
-
-            fs::create_dir_all(&install_path)?;
-            copy_dir_recursive(&src, &dest)?;
-            return Ok(Json(serde_json::json!({ "installed": name, "path": dest.to_string_lossy() })));
-        }
-    };
-
-    let dest = install_base.join(&name);
+    fs::create_dir_all(&agent.skills_path)?;
     copy_dir_recursive(&src, &dest)?;
 
-    Ok(Json(serde_json::json!({ "installed": name, "path": dest.to_string_lossy() })))
+    Ok(Json(serde_json::json!({
+        "installed": name,
+        "agent": agent.id,
+        "path": dest.to_string_lossy()
+    })))
 }
 
 fn copy_dir_recursive(src: &PathBuf, dst: &PathBuf) -> Result<(), AppError> {

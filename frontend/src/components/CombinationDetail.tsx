@@ -19,14 +19,15 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { Combination, ParallelGroup, Skill } from "../api/types";
+import type { Agent, Combination, ParallelGroup, Skill } from "../api/types";
 
 interface CombinationDetailProps {
   combination: Combination;
   allSkills: Skill[];
+  agents: Agent[];
   onClose: () => void;
   onDelete: (name: string) => void;
-  onInstall: (name: string) => void;
+  onInstall: (name: string, agent: string) => void;
   onUpdate: (name: string, data: { description?: string; skills?: string[]; workflow?: { groups: ParallelGroup[] } }) => void;
 }
 
@@ -219,6 +220,7 @@ function DraggableGroup({
 export function CombinationDetail({
   combination,
   allSkills,
+  agents,
   onClose,
   onDelete,
   onInstall,
@@ -226,6 +228,8 @@ export function CombinationDetail({
 }: CombinationDetailProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [showAgentSelect, setShowAgentSelect] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState(agents[0]?.id ?? "");
   const [editSkills, setEditSkills] = useState(combination.skills);
   const [editDescription, setEditDescription] = useState(combination.description);
   const [editGroups, setEditGroups] = useState<ParallelGroup[]>(
@@ -710,23 +714,72 @@ export function CombinationDetail({
               </button>
             ) : (
               <>
-                <button
-                  onClick={() => onInstall(combination.name)}
-                  className="btn-primary-blue flex-1"
-                >
-                  Install All ({combination.skills.length})
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className={`text-sm px-5 py-2.5 rounded-full border transition-colors cursor-pointer font-medium ${
-                    confirmDelete
-                      ? "bg-[var(--color-danger)] text-white border-[var(--color-danger)]"
-                      : "border-[rgba(0,0,0,0.12)] text-[var(--color-text-secondary)] hover:border-[var(--color-danger)] hover:text-[var(--color-danger)]"
-                  }`}
-                  style={{ letterSpacing: "-0.224px" }}
-                >
-                  {confirmDelete ? "Confirm Delete" : "Delete"}
-                </button>
+                {showAgentSelect ? (
+                  <div className="flex-1 space-y-3">
+                    <div className="space-y-2">
+                      {agents.map((agent) => (
+                        <label
+                          key={agent.id}
+                          className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors text-sm"
+                          style={{
+                            background: selectedAgent === agent.id ? "rgba(0,113,227,0.08)" : "rgba(0,0,0,0.02)",
+                            border: selectedAgent === agent.id ? "1px solid var(--color-apple-blue)" : "1px solid rgba(0,0,0,0.06)",
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name="combo-agent"
+                            value={agent.id}
+                            checked={selectedAgent === agent.id}
+                            onChange={() => setSelectedAgent(agent.id)}
+                            className="accent-[var(--color-apple-blue)]"
+                          />
+                          <span>{agent.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setShowAgentSelect(false)}
+                        className="flex-1 text-sm px-4 py-2.5 rounded-full border transition-colors cursor-pointer"
+                        style={{ borderColor: "rgba(0,0,0,0.12)", color: "var(--color-text-secondary)", letterSpacing: "-0.224px" }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!selectedAgent) return;
+                          onInstall(combination.name, selectedAgent);
+                          setShowAgentSelect(false);
+                        }}
+                        disabled={!selectedAgent}
+                        className="flex-1 btn-primary-blue disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Install All ({combination.skills.length})
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setShowAgentSelect(true)}
+                      className="btn-primary-blue flex-1"
+                    >
+                      Install All ({combination.skills.length})
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className={`text-sm px-5 py-2.5 rounded-full border transition-colors cursor-pointer font-medium ${
+                        confirmDelete
+                          ? "bg-[var(--color-danger)] text-white border-[var(--color-danger)]"
+                          : "border-[rgba(0,0,0,0.12)] text-[var(--color-text-secondary)] hover:border-[var(--color-danger)] hover:text-[var(--color-danger)]"
+                      }`}
+                      style={{ letterSpacing: "-0.224px" }}
+                    >
+                      {confirmDelete ? "Confirm Delete" : "Delete"}
+                    </button>
+                  </>
+                )}
               </>
             )}
           </div>

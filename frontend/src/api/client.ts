@@ -1,4 +1,5 @@
 import type {
+  Agent,
   Skill,
   SkillListResponse,
   TagsResponse,
@@ -14,6 +15,7 @@ import type {
   CreateCombinationRequest,
   UpdateCombinationRequest,
   InstallCombinationResponse,
+  InstallSkillResponse,
   GithubImportRequest,
   GithubImportResponse,
   SuggestTagsResponse,
@@ -35,6 +37,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  listAgents: () => request<Agent[]>("/agents"),
+
   listSkills: (q?: string, tag?: string) => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
@@ -76,10 +80,10 @@ export const api = {
       method: "DELETE",
     }),
 
-  installSkill: (name: string, targetDir?: string) =>
-    request<{ installed: string; path: string }>(`/skills/${encodeURIComponent(name)}/install`, {
+  installSkill: (name: string, agent: string) =>
+    request<InstallSkillResponse>(`/skills/${encodeURIComponent(name)}/install`, {
       method: "POST",
-      body: JSON.stringify({ target_dir: targetDir }),
+      body: JSON.stringify({ agent }),
     }),
 
   listImportable: () => request<ImportableSkill[]>("/skills/importable"),
@@ -111,9 +115,10 @@ export const api = {
   deleteCombination: (name: string) =>
     request<{ deleted: string }>(`/combinations/${encodeURIComponent(name)}`, { method: "DELETE" }),
 
-  installCombination: (name: string) =>
+  installCombination: (name: string, agent: string) =>
     request<InstallCombinationResponse>(`/combinations/${encodeURIComponent(name)}/install`, {
       method: "POST",
+      body: JSON.stringify({ agent }),
     }),
 
   // Suggest Tags

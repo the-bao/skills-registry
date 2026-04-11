@@ -93,7 +93,7 @@ fn default_agents(home: &PathBuf) -> Vec<crate::models::Agent> {
         Agent {
             id: "openclaw".into(),
             name: "OpenClaw".into(),
-            skills_path: home.join(".claude").join("skills"),
+            skills_path: home.join(".openclaw").join("workspace").join("skills"),
         },
         Agent {
             id: "codex".into(),

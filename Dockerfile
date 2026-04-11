@@ -62,8 +62,11 @@ EXPOSE 3000
 # Default environment variables
 ENV REGISTRY_PATH=/app/registry
 ENV DB_PATH=/app/data/registry.db
-ENV SKILLS_INSTALL_PATH=/home/appuser/.claude/skills
 ENV PORT=3000
 ENV FRONTEND_DIST=/app/frontend/dist
+# Agent skill directory overrides (defaults: ~/.claude/skills, ~/.codex/skills)
+# ENV AGENT_CLAUDE_CODE_PATH=/home/appuser/.claude/skills
+# ENV AGENT_OPENCLAW_PATH=/home/appuser/.claude/skills
+# ENV AGENT_CODEX_PATH=/home/appuser/.codex/skills
 
 CMD ["skills-registry"]

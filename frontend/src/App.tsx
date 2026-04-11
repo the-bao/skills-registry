@@ -71,6 +71,12 @@ function App() {
     queryFn: api.listCombinations,
   });
 
+  const { data: agentsData } = useQuery({
+    queryKey: ["agents"],
+    queryFn: api.listAgents,
+  });
+  const agents = agentsData ?? [];
+
   const deleteMutation = useMutation({
     mutationFn: api.deleteSkill,
     onSuccess: () => {
@@ -81,11 +87,11 @@ function App() {
   });
 
   const installMutation = useMutation({
-    mutationFn: ({ name, targetDir }: { name: string; targetDir?: string }) =>
-      api.installSkill(name, targetDir),
+    mutationFn: ({ name, agent }: { name: string; agent: string }) =>
+      api.installSkill(name, agent),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["skills"] });
-      showToast(`"${data.installed}" installed successfully to ${data.path}`);
+      showToast(`"${data.installed}" installed to ${data.agent}`);
     },
     onError: (error: Error) => {
       showToast(error.message, "error");
@@ -264,7 +270,7 @@ function App() {
               <SkillGrid skills={skills} onSelect={handleSelectSkill} />
             </div>
           ) : activeTab === "combinations" ? (
-            <CombinationsPage allSkills={skills} />
+            <CombinationsPage allSkills={skills} agents={agents} />
           ) : (
             <TagManagementPage />
           )}
@@ -322,9 +328,10 @@ function App() {
             key={selectedSkill.name}
             skill={selectedSkill}
             allTags={tags}
+            agents={agents}
             onClose={() => setSelectedSkill(null)}
             onDelete={(name) => deleteMutation.mutate(name)}
-            onInstall={(name, targetDir) => installMutation.mutate({ name, targetDir })}
+            onInstall={(name, agent) => installMutation.mutate({ name, agent })}
             onAddTag={(name, tag) => addTagMutation.mutate({ name, tag })}
             onRemoveTag={(name, tag) => removeTagMutation.mutate({ name, tag })}
             onSuggestTags={(name) => suggestTagsMutation.mutateAsync(name).then((res) => res.suggested)}

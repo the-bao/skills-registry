@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Skill } from "../api/types";
+import type { Skill, Agent } from "../api/types";
 
 interface SkillDetailProps {
   skill: Skill;
   allTags: string[];
+  agents: Agent[];
   onClose: () => void;
   onDelete: (name: string) => void;
-  onInstall: (name: string, targetDir?: string) => void;
+  onInstall: (name: string, agent: string) => void;
   onAddTag: (name: string, tag: string) => void;
   onRemoveTag: (name: string, tag: string) => void;
   onSuggestTags: (name: string) => Promise<string[]>;
@@ -17,6 +18,7 @@ interface SkillDetailProps {
 export function SkillDetail({
   skill,
   allTags,
+  agents,
   onClose,
   onDelete,
   onInstall,
@@ -29,7 +31,7 @@ export function SkillDetail({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [showInstallOptions, setShowInstallOptions] = useState(false);
-  const [installTargetDir, setInstallTargetDir] = useState("");
+  const [selectedAgent, setSelectedAgent] = useState(agents[0]?.id ?? "");
 
   const handleAddTag = () => {
     const t = newTag.trim();
@@ -48,10 +50,9 @@ export function SkillDetail({
   };
 
   const handleInstall = () => {
-    const targetDir = installTargetDir.trim() || undefined;
-    onInstall(skill.name, targetDir);
+    if (!selectedAgent) return;
+    onInstall(skill.name, selectedAgent);
     setShowInstallOptions(false);
-    setInstallTargetDir("");
   };
 
   return (
@@ -216,44 +217,47 @@ export function SkillDetail({
               {showInstallOptions ? (
                 /* Install Options Panel */
                 <div className="space-y-3">
-                  <p
-                    className="text-xs font-medium text-[var(--color-text-tertiary)]"
-                    style={{ letterSpacing: "-0.224px" }}
-                  >
-                    Install to custom directory (optional)
+                  <p className="text-xs font-medium text-[var(--color-text-tertiary)]" style={{ letterSpacing: "-0.224px" }}>
+                    Select target agent
                   </p>
-                  <input
-                    type="text"
-                    value={installTargetDir}
-                    onChange={(e) => setInstallTargetDir(e.target.value)}
-                    placeholder="e.g. /path/to/your/project (will create .claude/skills)"
-                    className="w-full text-sm px-3 py-2 rounded-lg outline-none"
-                    style={{
-                      background: "rgba(0,0,0,0.04)",
-                      border: "1px solid rgba(0,0,0,0.06)",
-                      letterSpacing: "-0.374px"
-                    }}
-                  />
+                  <div className="space-y-2">
+                    {agents.map((agent) => (
+                      <label
+                        key={agent.id}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors"
+                        style={{
+                          background: selectedAgent === agent.id ? "rgba(0,113,227,0.08)" : "rgba(0,0,0,0.02)",
+                          border: selectedAgent === agent.id ? "1px solid var(--color-apple-blue)" : "1px solid rgba(0,0,0,0.06)",
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="agent"
+                          value={agent.id}
+                          checked={selectedAgent === agent.id}
+                          onChange={() => setSelectedAgent(agent.id)}
+                          className="accent-[var(--color-apple-blue)]"
+                        />
+                        <span className="text-sm" style={{ letterSpacing: "-0.224px" }}>
+                          {agent.name}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => {
-                        setShowInstallOptions(false);
-                        setInstallTargetDir("");
-                      }}
+                      onClick={() => { setShowInstallOptions(false); }}
                       className="flex-1 text-sm px-4 py-2.5 rounded-full border transition-colors cursor-pointer"
-                      style={{
-                        borderColor: "rgba(0,0,0,0.12)",
-                        color: "var(--color-text-secondary)",
-                        letterSpacing: "-0.224px"
-                      }}
+                      style={{ borderColor: "rgba(0,0,0,0.12)", color: "var(--color-text-secondary)", letterSpacing: "-0.224px" }}
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleInstall}
-                      className="flex-1 btn-primary-blue"
+                      disabled={!selectedAgent}
+                      className="flex-1 btn-primary-blue disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      {installTargetDir.trim() ? "Install to Custom" : "Install to Global"}
+                      Install
                     </button>
                   </div>
                 </div>

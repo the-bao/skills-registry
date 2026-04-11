@@ -116,11 +116,18 @@ export interface SkillAutoTagResult {
   tags_added: string[];
 }
 
+export interface Agent {
+  id: string;
+  name: string;
+  skills_path: string;
+}
+
 export interface InstallSkillRequest {
-  target_dir?: string;
+  agent: string;
 }
 
 export interface InstallSkillResponse {
   installed: string;
+  agent: string;
   path: string;
 }

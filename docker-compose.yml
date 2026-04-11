@@ -6,6 +6,8 @@ services:
     volumes:
       - ./registry:/app/registry
       - ./data:/app/data
+      - ~/.claude/skills:/home/appuser/.claude/skills
+      - ~/.codex/skills:/home/appuser/.codex/skills
     environment:
       - ANTHROPIC_AUTH_TOKEN=${ANTHROPIC_AUTH_TOKEN}
       - ANTHROPIC_BASE_URL=${ANTHROPIC_BASE_URL:-https://api.anthropic.com}

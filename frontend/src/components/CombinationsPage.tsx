@@ -2,16 +2,17 @@ import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence } from "framer-motion";
 import { api } from "../api/client";
-import type { Combination, Skill } from "../api/types";
+import type { Agent, Combination, Skill } from "../api/types";
 import { CombinationCard } from "./CombinationCard";
 import { CombinationDetail } from "./CombinationDetail";
 import { CreateCombinationModal } from "./CreateCombinationModal";
 
 interface CombinationsPageProps {
   allSkills: Skill[];
+  agents: Agent[];
 }
 
-export function CombinationsPage({ allSkills }: CombinationsPageProps) {
+export function CombinationsPage({ allSkills, agents }: CombinationsPageProps) {
   const queryClient = useQueryClient();
   const [selectedCombo, setSelectedCombo] = useState<Combination | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -45,7 +46,8 @@ export function CombinationsPage({ allSkills }: CombinationsPageProps) {
   });
 
   const installMutation = useMutation({
-    mutationFn: api.installCombination,
+    mutationFn: ({ name, agent }: { name: string; agent: string }) =>
+      api.installCombination(name, agent),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["skills"] });
     },
@@ -117,9 +119,10 @@ export function CombinationsPage({ allSkills }: CombinationsPageProps) {
             key={selectedCombo.name}
             combination={selectedCombo}
             allSkills={allSkills}
+            agents={agents}
             onClose={() => setSelectedCombo(null)}
             onDelete={(name) => deleteMutation.mutate(name)}
-            onInstall={(name) => installMutation.mutate(name)}
+            onInstall={(name, agent) => installMutation.mutate({ name, agent })}
             onUpdate={(name, data) => updateMutation.mutate({ name, data })}
           />
         )}

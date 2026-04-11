@@ -25,8 +25,8 @@ Browse, tag, and install AI agent skills from one place. Skills Registry support
 - **Combinations** — Group multiple skills into installable combinations
 - **Add Skills** — Import a skill from any local directory containing a `SKILL.md`
 - **Delete Skills** — Remove skills from the registry
-- **Install** — Copy a skill from registry to `~/.claude/skills/`
-- **Import** — Scan `~/.claude/skills/` and batch-import into registry
+- **Agent-Based Install** — Select an AI agent (Claude Code, OpenClaw, Codex) and install skills directly to its global directory
+- **Import** — Scan any agent's skills directory and batch-import into registry
 - **GitHub Import** — Import skills directly from any GitHub repository
 - **Auto-sync** — On startup, the backend scans `registry/` and indexes all `SKILL.md` frontmatter
 
@@ -41,13 +41,15 @@ Skills Registry serves as a **unified skill management hub** with a layered arch
 │                                                             │
 │   registry/  ←  GitHub Import  ←  Local Directories         │
 └─────────────────────────┬───────────────────────────────────┘
-                          │ mount / copy
+                          │ install to agent
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
 │              Agent Global Skills Directory                   │
 │         (Claude Code / OpenClaw / Codex / ...)              │
 │                                                             │
-│   ~/.claude/skills/  ←  skills-registry                      │
+│   ~/.claude/skills/           ←  Claude Code                │
+│   ~/.openclaw/workspace/skills/ ←  OpenClaw                 │
+│   ~/.codex/skills/            ←  Codex                      │
 └─────────────────────────┬───────────────────────────────────┘
                           │ agent distributes
                           ▼
@@ -60,12 +62,12 @@ Skills Registry serves as a **unified skill management hub** with a layered arch
 
 **Layered flow:**
 1. **Skills Registry** — Central hub: browse, search, tag, organize, create combinations
-2. **Agent Global Directory** — Mount via Docker or copy skills to agent's global skills path
+2. **Agent Global Directory** — Select target agent and install skills to its fixed global path
 3. **Project Directory** — Agent distributes relevant skills to project on demand
 
 This design lets you:
 - Manage all skills in one place with a friendly UI
-- Install skills to any agent via mount (zero-copy, instant availability)
+- Install skills to any supported AI agent with one click
 - Let each agent handle its own project-level skill distribution
 
 ## Tech Stack
@@ -149,29 +151,29 @@ docker run -d -p 3000:3000 \
 
 Open http://localhost:3000 after starting.
 
-### Use with Claude Code or OpenClaw on Host
+### Use with AI Agents on Host
 
-To install skills directly into your host's Claude Code or OpenClaw via the container, mount the host's skills directory to the container's install target:
+To install skills directly into your host's AI agent directories via the container, mount the host's skills directories:
 
 ```bash
 docker run -d -p 3000:3000 \
   -v $(pwd)/registry:/app/registry \
   -v $(pwd)/data:/app/data \
   -v ~/.claude/skills:/home/appuser/.claude/skills \
-  -e SKILLS_INSTALL_PATH=/home/appuser/.claude/skills \
+  -v ~/.openclaw/workspace/skills:/home/appuser/.openclaw/workspace/skills \
+  -v ~/.codex/skills:/home/appuser/.codex/skills \
   -e ANTHROPIC_AUTH_TOKEN=your-api-key \
   skills-registry:latest
 ```
 
 This allows you to:
 - Browse and manage skills in the web UI
-- Install skills from the registry to your host's Claude Code or OpenClaw
-- The installed skills become immediately available in Claude Code or OpenClaw running on the host
+- Select an AI agent (Claude Code, OpenClaw, Codex) and install with one click
+- The installed skills become immediately available in the target agent on the host
 
 **Path notes:**
-- Linux/macOS: `~/.claude/skills` → `/home/USER/.claude/skills`
 - The container runs as user `appuser` (UID 1000)
-- OpenClaw uses the same skills directory structure as Claude Code, so the same mount works for both
+- Agent paths can be overridden via `AGENT_*_PATH` environment variables
 
 ## Configuration
 
@@ -183,12 +185,29 @@ Environment variables:
 |----------|---------|-------------|
 | `REGISTRY_PATH` | `./registry` | Path to skill storage directory |
 | `DB_PATH` | `./data/registry.db` | Path to redb database file |
-| `SKILLS_INSTALL_PATH` | `~/.claude/skills` | Claude Code skills install target |
 | `PORT` | `3000` | HTTP server port |
 | `FRONTEND_DIST` | `./frontend/dist` | Frontend static files directory |
 | `ANTHROPIC_AUTH_TOKEN` | — | API key for AI auto-tagging (required for AI features) |
 | `ANTHROPIC_BASE_URL` | `https://api.anthropic.com` | AI API base URL (supports Anthropic, GLM, MiniMax) |
 | `ANTHROPIC_MODEL` | `claude-sonnet-4-20250514` | AI model for tag suggestion |
+
+### Agent Install Paths
+
+Skills are installed to each agent's fixed global directory. Defaults:
+
+| Agent | Default Path |
+|-------|-------------|
+| Claude Code | `~/.claude/skills` |
+| OpenClaw | `~/.openclaw/workspace/skills` |
+| Codex | `~/.codex/skills` |
+
+Override with environment variables (agent ID uppercase, hyphens to underscores):
+
+| Variable | Description |
+|----------|-------------|
+| `AGENT_CLAUDE_CODE_PATH` | Override Claude Code install path |
+| `AGENT_OPENCLAW_PATH` | Override OpenClaw install path |
+| `AGENT_CODEX_PATH` | Override Codex install path |
 
 ### AI API Compatibility
 
@@ -280,8 +299,8 @@ MIT
 - **技能组合** — 将多个 skill 组合为可一键安装的组合
 - **添加 Skill** — 从任意本地目录导入含 `SKILL.md` 的 skill
 - **删除 Skill** — 从仓库中移除 skill
-- **安装** — 将 skill 从仓库复制到 `~/.claude/skills/`
-- **导入** — 扫描 `~/.claude/skills/` 批量导入到仓库
+- **Agent 安装** — 选择 AI Agent（Claude Code、OpenClaw、Codex）一键安装 skill 到对应全局目录
+- **导入** — 扫描 Agent 的 skill 目录批量导入到仓库
 - **GitHub 导入** — 直接从 GitHub 仓库导入 skill
 - **自动同步** — 启动时扫描 `registry/` 目录，自动索引所有 `SKILL.md` 元数据
 
@@ -296,13 +315,15 @@ Skills Registry 作为**统一管理 skill 的中枢**，采用分层架构：
 │                                                             │
 │   registry/  ←  GitHub 导入  ←  本地目录                     │
 └─────────────────────────┬───────────────────────────────────┘
-                          │ 挂载 / 复制
+                          │ 安装到 Agent
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                  Agent 全局 Skills 目录                      │
 │               （Claude Code / OpenClaw / Codex / ...）       │
 │                                                             │
-│   ~/.claude/skills/  ←  skills-registry                     │
+│   ~/.claude/skills/              ←  Claude Code             │
+│   ~/.openclaw/workspace/skills/  ←  OpenClaw                │
+│   ~/.codex/skills/               ←  Codex                   │
 └─────────────────────────┬───────────────────────────────────┘
                           │ Agent 按需分发
                           ▼
@@ -315,12 +336,12 @@ Skills Registry 作为**统一管理 skill 的中枢**，采用分层架构：
 
 **分层架构：**
 1. **Skills Registry** — 中心枢纽：浏览、搜索、标签、组合
-2. **Agent 全局目录** — 通过 Docker 挂载或复制方式安装 skill 到各 Agent
+2. **Agent 全局目录** — 选择目标 Agent，一键安装 skill 到其固定全局目录
 3. **项目目录** — Agent 运行时按需分发 skill 到项目
 
 设计优势：
 - 统一管理所有 skill，一个界面搞定
-- 挂载安装，零拷贝，即装即用
+- 一键选择 Agent 安装，即装即用
 - 各 Agent 自行管理项目级 skill 分发
 
 ## 技术栈
@@ -404,28 +425,29 @@ docker run -d -p 3000:3000 \
 
 启动后访问 http://localhost:3000。
 
-### 与宿主机 Claude Code或OpenClaw 配合使用
+### 与宿主机 AI Agent 配合使用
 
-通过容器将 skill 直接安装到宿主机的 Claude Code或OpenClaw，只需将宿主机的 skills 目录挂载到容器的安装目标目录：
+通过容器将 skill 直接安装到宿主机的 AI Agent 目录，只需将宿主机的 skills 目录挂载到容器：
 
 ```bash
 docker run -d -p 3000:3000 \
   -v $(pwd)/registry:/app/registry \
   -v $(pwd)/data:/app/data \
   -v ~/.claude/skills:/home/appuser/.claude/skills \
-  -e SKILLS_INSTALL_PATH=/home/appuser/.claude/skills \
+  -v ~/.openclaw/workspace/skills:/home/appuser/.openclaw/workspace/skills \
+  -v ~/.codex/skills:/home/appuser/.codex/skills \
   -e ANTHROPIC_AUTH_TOKEN=your-api-key \
   skills-registry:latest
 ```
 
 这样你就可以：
 - 在 Web 界面中浏览和管理 skills
-- 将 skills 从仓库安装到宿主机的 Claude Code
-- 安装后的 skills 可在宿主机上的 Claude Code 中直接使用
+- 选择目标 Agent（Claude Code、OpenClaw、Codex）一键安装
+- 安装后的 skills 可在宿主机上对应的 Agent 中直接使用
 
 **路径说明：**
-- Linux/macOS：`~/.claude/skills` → `/home/USER/.claude/skills`
 - 容器以用户 `appuser`（UID 1000）运行
+- Agent 路径可通过 `AGENT_*_PATH` 环境变量覆盖
 
 ## 配置
 
@@ -437,12 +459,29 @@ docker run -d -p 3000:3000 \
 |------|--------|------|
 | `REGISTRY_PATH` | `./registry` | skill 存储目录 |
 | `DB_PATH` | `./data/registry.db` | redb 数据库文件路径 |
-| `SKILLS_INSTALL_PATH` | `~/.claude/skills` | Claude Code skill 安装目标 |
 | `PORT` | `3000` | HTTP 服务端口 |
 | `FRONTEND_DIST` | `./frontend/dist` | 前端静态文件目录 |
 | `ANTHROPIC_AUTH_TOKEN` | — | AI 自动标签 API 密钥（启用 AI 功能必需） |
 | `ANTHROPIC_BASE_URL` | `https://api.anthropic.com` | AI API 地址（支持 Anthropic、GLM、MiniMax） |
 | `ANTHROPIC_MODEL` | `claude-sonnet-4-20250514` | 用于标签推荐的 AI 模型 |
+
+### Agent 安装路径
+
+Skill 安装到各 Agent 的固定全局目录，默认值：
+
+| Agent | 默认路径 |
+|-------|---------|
+| Claude Code | `~/.claude/skills` |
+| OpenClaw | `~/.openclaw/workspace/skills` |
+| Codex | `~/.codex/skills` |
+
+通过环境变量覆盖（Agent ID 大写，连字符转下划线）：
+
+| 变量 | 说明 |
+|------|------|
+| `AGENT_CLAUDE_CODE_PATH` | 覆盖 Claude Code 安装路径 |
+| `AGENT_OPENCLAW_PATH` | 覆盖 OpenClaw 安装路径 |
+| `AGENT_CODEX_PATH` | 覆盖 Codex 安装路径 |
 
 ### AI API 兼容性
 

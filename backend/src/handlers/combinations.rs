@@ -132,10 +132,20 @@ pub struct InstallCombinationResponse {
     pub failed: Vec<String>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct InstallCombinationRequest {
+    pub agent: String,
+}
+
 pub async fn install_combination(
     State(state): State<AppState>,
     Path(name): Path<String>,
+    Json(body): Json<InstallCombinationRequest>,
 ) -> Result<Json<InstallCombinationResponse>, AppError> {
+    let agent = state
+        .get_agent(&body.agent)
+        .ok_or_else(|| AppError::BadRequest(format!("Unknown agent '{}'", body.agent)))?;
+
     let combo = state
         .store
         .get_combination(&name)?
@@ -143,7 +153,7 @@ pub async fn install_combination(
 
     let mut installed = Vec::new();
     let mut failed = Vec::new();
-    let install_path = state.agents.first().map(|a| a.skills_path.clone()).unwrap_or_default();
+    let install_path = agent.skills_path.clone();
 
     for skill_name in &combo.skills {
         let skill = match state.store.get_skill(skill_name)? {
