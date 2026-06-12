@@ -1,13 +1,13 @@
-use axum::extract::{Path, Query, State};
 use axum::Json;
+use axum::extract::{Path, Query, State};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::error::AppError;
-use crate::models::Skill;
 use crate::models::Agent;
+use crate::models::Skill;
 use crate::store::Store;
 
 #[derive(Debug, Clone)]
@@ -91,30 +91,27 @@ pub async fn add_skill(
     }
 
     let content = fs::read_to_string(&skill_file)?;
-    let frontmatter = crate::parser::parse_skill_frontmatter(&content)
-        .map_err(|e| AppError::BadRequest(e))?;
+    let frontmatter =
+        crate::parser::parse_skill_frontmatter(&content).map_err(|e| AppError::BadRequest(e))?;
 
-    let dest = state.registry_path.join(&frontmatter.name);
+    let skill_name = frontmatter.name.clone();
+    let dest = state.registry_path.join(&skill_name);
     if dest.exists() {
         return Err(AppError::BadRequest(format!(
             "Skill '{}' already exists in registry",
-            frontmatter.name
+            skill_name
         )));
     }
 
     copy_dir_recursive(&source, &dest)?;
 
     let skill = Skill {
-        name: frontmatter.name,
+        name: skill_name.clone(),
         description: frontmatter.description,
         version: frontmatter.version,
         user_invocable: frontmatter.user_invocable,
         tags: vec![],
-        path: source
-            .file_name()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .to_string(),
+        path: skill_name,
     };
 
     state.store.put_skill(&skill)?;
@@ -155,4 +152,73 @@ fn copy_dir_recursive(src: &PathBuf, dst: &PathBuf) -> Result<(), AppError> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::extract::State;
+    use tempfile::TempDir;
+
+    fn test_state(registry_dir: &TempDir, db_dir: &TempDir) -> AppState {
+        AppState {
+            store: Arc::new(Store::open(&db_dir.path().join("test.db")).unwrap()),
+            registry_path: registry_dir.path().to_path_buf(),
+            agents: Vec::new(),
+            http_client: reqwest::Client::new(),
+            anthropic_api_key: String::new(),
+            anthropic_base_url: String::new(),
+            anthropic_model: String::new(),
+        }
+    }
+
+    #[tokio::test]
+    async fn add_skill_uses_frontmatter_name_for_registry_path() {
+        let source_dir = TempDir::new().unwrap();
+        let registry_dir = TempDir::new().unwrap();
+        let db_dir = TempDir::new().unwrap();
+        let skill_source = source_dir.path().join("tweetclaw-source");
+        fs::create_dir_all(&skill_source).unwrap();
+        fs::write(
+            skill_source.join("SKILL.md"),
+            indoc::indoc! {r#"
+                ---
+                name: tweetclaw-social-research
+                description: "TweetClaw social research workflow"
+                version: "1.0.0"
+                user_invocable: true
+                ---
+
+                Use TweetClaw to inspect public X/Twitter data.
+            "#},
+        )
+        .unwrap();
+
+        let state = test_state(&registry_dir, &db_dir);
+        let Json(skill) = add_skill(
+            State(state.clone()),
+            Json(AddSkillRequest {
+                source_path: skill_source.to_string_lossy().to_string(),
+            }),
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(skill.name, "tweetclaw-social-research");
+        assert_eq!(skill.path, "tweetclaw-social-research");
+        assert!(
+            registry_dir
+                .path()
+                .join("tweetclaw-social-research")
+                .join("SKILL.md")
+                .exists()
+        );
+        assert!(!registry_dir.path().join("tweetclaw-source").exists());
+        let stored_skill = state
+            .store
+            .get_skill("tweetclaw-social-research")
+            .unwrap()
+            .unwrap();
+        assert_eq!(stored_skill.path, "tweetclaw-social-research");
+    }
 }
