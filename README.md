@@ -2,7 +2,7 @@
 
 Browse, tag, and install AI agent skills from one place. Skills Registry supports Claude Code, OpenClaw, Codex, and more.
 
-[中文文档](#中文)
+[中文文档](#skills-registry中文)
 
 ## Star History
 
@@ -174,6 +174,23 @@ This allows you to:
 **Path notes:**
 - The container runs as user `appuser` (UID 1000)
 - Agent paths can be overridden via `AGENT_*_PATH` environment variables
+
+### GitHub Import Example
+
+The GitHub importer accepts `owner/repo` or a GitHub URL, clones the repo, and
+scans recursively for nested `SKILL.md` files. For example, import TweetClaw's
+packaged skill collection with:
+
+```text
+Xquik-dev/tweetclaw
+```
+
+Skills Registry will find `skills/tweetclaw/SKILL.md`, copy the skill into your
+registry, and keep local installation under your selected agent directory. Use
+it as a real-world smoke test for multi-directory repos: the imported skill
+documents X/Twitter jobs such as tweet search, reply search, follower export,
+user lookup, media workflows, monitors, webhooks, giveaway draws, and
+approval-gated posting through the OpenClaw plugin.
 
 ## Configuration
 
@@ -423,7 +440,7 @@ docker run -d -p 3000:3000 \
 | `/app/registry` | Skill 存储目录 |
 | `/app/data` | 数据库文件 |
 
-启动后访问 http://localhost:3000。
+启动后访问 `http://localhost:3000`。
 
 ### 与宿主机 AI Agent 配合使用
 
@@ -448,6 +465,21 @@ docker run -d -p 3000:3000 \
 **路径说明：**
 - 容器以用户 `appuser`（UID 1000）运行
 - Agent 路径可通过 `AGENT_*_PATH` 环境变量覆盖
+
+### GitHub 导入示例
+
+GitHub 导入器接受 `owner/repo` 或 GitHub URL，克隆仓库后递归扫描嵌套的
+`SKILL.md`。例如，可以导入 TweetClaw 的 packaged skill：
+
+```text
+Xquik-dev/tweetclaw
+```
+
+Skills Registry 会找到 `skills/tweetclaw/SKILL.md`，将 skill 复制到你的
+registry，并按所选 Agent 路径完成本地安装。这个示例适合作为多目录仓库的真实
+smoke test：导入后的 skill 说明 tweet search、reply search、follower export、
+user lookup、media workflows、monitors、webhooks、giveaway draws，以及通过
+OpenClaw plugin 审批后执行的 posting workflows。
 
 ## 配置
 
